@@ -1,0 +1,5 @@
+Texture   TexBlack      images/tloz/tile_black.png
+Animation Black         TexBlack        1    0
+Font      Arial      fonts/arial.ttf
+Font      Mario      fonts/mario.ttf
+Font      Megaman    fonts/megaman.ttf

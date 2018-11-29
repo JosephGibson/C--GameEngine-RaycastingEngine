@@ -1,0 +1,6 @@
+﻿  GameState_Play.cpp
+c:\users\joseph\desktop\a5\src\gamestate_play.cpp(595): warning C4305: '+=': truncation from 'double' to 'float'
+c:\users\joseph\desktop\a5\src\gamestate_play.cpp(599): warning C4305: '-=': truncation from 'double' to 'float'
+c:\users\joseph\desktop\a5\src\gamestate_play.cpp(712): warning C4018: '<': signed/unsigned mismatch
+c:\users\joseph\desktop\a5\src\gamestate_play.cpp(721): warning C4018: '<': signed/unsigned mismatch
+  SFMLGame.vcxproj -> C:\Users\Joseph\Desktop\a5\visualstudio\../bin/SFMLGame_d.exe
