@@ -11,9 +11,7 @@ GameEngine::GameEngine(const std::string & path)
 void GameEngine::init(const std::string & path)
 {
     m_assets.loadFromFile(path);
-
-    // TO-DO Update h => 768
-    m_window.create(sf::VideoMode(1280, 704), "Game", sf::Style::Resize);
+    m_window.create(sf::VideoMode(1344, 768), "Game", sf::Style::Resize);
     m_window.setFramerateLimit(60);
 
     pushState(std::make_shared<GameState_Menu>(*this));

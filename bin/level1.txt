@@ -1,2 +1,10 @@
-Tile Black   0  0 10  2 1 1
-Player 640 360 48 48 5
+Tile rust_1 0 0 1 1
+Tile rust_2 1 0 1 1
+Tile rust_3 2 0 1 1
+Tile rust_4 3 0 1 1
+Tile concrete_1 4 0 1 1
+Tile concrete_2 5 0 1 1
+Tile concrete_3 6 0 1 1
+Tile concrete_4 7 0 1 1
+Tile concrete_5 8 0 1 1
+Player 0 1 30 64 5

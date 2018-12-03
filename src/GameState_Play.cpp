@@ -21,7 +21,6 @@ void GameState_Play::init(const std::string & levelPath)
 {
 
 	loadLevel(levelPath);
-	gridBuilder();
 }
 
 /**
@@ -45,41 +44,44 @@ void GameState_Play::loadLevel(const std::string & filename)
 		/*Player found, load.*/
 		if (token == "Player")
 		{
-			file >> m_playerConfig.X >> m_playerConfig.Y >> m_playerConfig.CX >> m_playerConfig.CY >> m_playerConfig.SPEED;
+			float x,y;
+			file >> x >> y >> m_playerConfig.CX >> m_playerConfig.CY >> m_playerConfig.SPEED;
+			m_playerConfig.X = (x*64) + 32;
+			m_playerConfig.Y = -((y*64) + 32);
 		}
 
 		/*Tile found, load.*/
 		else if (token == "Tile")
 		{
 			std::string name;
-			int RX, RY, TX, TY, BM, BV;
-			file >> name >> RX >> RY >> TX >> TY >> BM >> BV;
+			float TX, TY;
+			int BM, BV;
+			file >> name >> TX >> TY >> BM >> BV;
 			auto e = m_entityManager.addEntity(token);
-			e->addComponent<CTransform>()->pos = Vec2(RX * m_game.window().getDefaultView().getSize().x + (TX * 64) + 32, RY * m_game.window().getDefaultView().getSize().y + (TY * 64) + 32);
+			e->addComponent<CTransform>()->pos = Vec2((TX * 64) + 32, -((TY * 64) + 32));
 			e->addComponent<CAnimation>(m_game.getAssets().getAnimation(name), true);
 			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize(), BM, BV);
-			e->addComponent<CDraggable>(true);
 		}
 
 		/*NPC found, load.*/
 		else if (token == "NPC")
 		{
 			std::string name, aiName;
-			int RX, RY, BM, BV, speed;
-			int TY, TX;
-			file >> name >> RX >> RY >> TX >> TY >> BM >> BV >> aiName;
+			int BM, BV, speed;
+			float TY, TX;
+			file >> name >> TX >> TY >> BM >> BV >> aiName;
 
 			auto e = m_entityManager.addEntity(token);
-			e->addComponent<CTransform>()->pos = Vec2(RX * m_game.window().getDefaultView().getSize().x + (TX * 64) + 32, RY * m_game.window().getDefaultView().getSize().y + (TY * 64) + 32);
+			e->addComponent<CTransform>()->pos = Vec2((TX * 64) + 32, (TY * 64) + 32);
 			e->addComponent<CAnimation>(m_game.getAssets().getAnimation(name), true);
 			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize(), BM, BV);
-			e->addComponent<CDraggable>(true);
+			m_player->addComponent<CGravity>(0.5);
 
 			if ( aiName == "Follow")
 			{
 				file >> speed;
 				e->addComponent<CFollowPlayer>(Vec2(0, 0), speed);
-				e->getComponent<CFollowPlayer>()->home = Vec2(RX * m_game.window().getDefaultView().getSize().x + (TX * 64) + 32, RY * m_game.window().getDefaultView().getSize().y + (TY * 64)  + 32);
+				e->getComponent<CFollowPlayer>()->home = Vec2((TX * 64) + 32, (TY * 64)  + 32);
 			}
 
 			else if ( aiName == "Patrol")
@@ -91,12 +93,11 @@ void GameState_Play::loadLevel(const std::string & filename)
 				while (i < points)
 				{
 					file >> x >> y;
-					pos.push_back(Vec2(RX * m_game.window().getDefaultView().getSize().x + (x * 64) + 32, RY * m_game.window().getDefaultView().getSize().y + (y * 64) + 32));
+					pos.push_back(Vec2((x * 64) + 32, (y * 64) + 32));
 					i++;
 				}
 				e->addComponent<CPatrol>(pos, speed);
 			}
-
 		}
 	}
 
@@ -109,9 +110,11 @@ void GameState_Play::spawnPlayer()
 	m_player = m_entityManager.addEntity("player");
 	m_player->addComponent<CTransform>(Vec2(m_playerConfig.X, m_playerConfig.Y));
 	m_player->getComponent<CTransform>()->facing = Vec2(0, 1);
-	m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("Black"), true);
+	m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_stand"), true);
 	m_player->addComponent<CInput>();
 	m_player->addComponent<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, true);;
+	m_player->addComponent<CGravity>(0.5);
+	m_player->addComponent<CState>("stand");
 }
 
 
@@ -156,10 +159,12 @@ void GameState_Play::sMovement()
 	/* Save players speed for easy access. */
 	Vec2 speed = Vec2(0, 0);
 	auto pInput = m_player->getComponent<CInput>();
+	std::string state = "stand";
 
 	if (pInput->up)
 	{
 		speed.y = -3.5;
+		state = "jump";
 	}
 	else if (pInput->down)
 	{
@@ -169,16 +174,21 @@ void GameState_Play::sMovement()
 	if (pInput->right)
 	{
 		speed.x = 3.5;
+		m_player->getComponent<CTransform>()->scale.x = 1;
+		state = "run";
 	}
 	else if (pInput->left)
 	{
 		speed.x = -3.5;
+		m_player->getComponent<CTransform>()->scale.x = -1;
+		state = "run";
 	}
+
 	/* Set m_players PrevPos = Pos, Set Pos += Speed */
 	m_player->getComponent<CTransform>()->speed = speed;
 	m_player->getComponent<CTransform>()->prevPos = m_player->getComponent<CTransform>()->pos;
 	m_player->getComponent<CTransform>()->pos += m_player->getComponent<CTransform>()->speed;
-
+	m_player->getComponent<CState>()-> state = state;
 }
 
 /**
@@ -262,6 +272,7 @@ void GameState_Play::sAI()
 	}
 }
 
+
 /**
  * [GameState_Play::sLifespan description]
  */
@@ -272,12 +283,6 @@ void GameState_Play::sLifespan()
 	{
 		if (e->hasComponent<CLifeSpan>() && e->getComponent<CLifeSpan>()->clock.getElapsedTime().asMilliseconds() >= e->getComponent<CLifeSpan>()->lifespan)
 		{
-			/*Once the sword is dead, reset canShoot, check for both animations. */
-			if (e->getComponent<CAnimation>()->animation.getName() == "SwordUp" || e->getComponent<CAnimation>()->animation.getName() == "SwordRight")
-			{
-				m_player->getComponent<CInput>()->canShoot = true;
-			}
-
 			e->destroy();
 		}
 	}
@@ -371,92 +376,22 @@ void GameState_Play::sCollision()
 						}
 
 					}
-
-
 				}
-
 			}
 		}
 	}
-}
-
-
-/**
- * [GameState_Play::gridBuilder description]
- */
-void GameState_Play::gridBuilder()
-{
-	int w = m_game.window().getDefaultView().getSize().x;
-	int h = m_game.window().getDefaultView().getSize().y;
-
-	for (auto room : m_RoomsX)
+	/* Check for sword enemy cols */
+	for (auto & npc : m_entityManager.getEntities("NPC"))
 	{
-		int index = 64;
-		while (index < w)
+		/*Check for player NPC overlaps */
+		Vec2 playerOverLap = Physics::GetOverlap(m_player, npc);
+		if (playerOverLap.x >= 0 && playerOverLap.y >= 0)
 		{
-			sf::VertexArray line(sf::LinesStrip, 2);
-			line[0].color = sf::Color::Black;
-			line[1].color = sf::Color::Black;
-			int x = room * w + index;
-			line[0].position = sf::Vector2f(x, m_RoomsY.front() * h);
-			line[1].position = sf::Vector2f(x, m_RoomsY.back() * h + h);
-			m_grid.push_back(line);
-			index += 64;
-
-		}
-
-	}
-	for (auto room : m_RoomsY)
-	{
-		int index = 0;
-		while (index < h)
-		{
-			sf::VertexArray line(sf::LinesStrip, 2);
-			line[0].color = sf::Color::Black;
-			line[1].color = sf::Color::Black;
-			int y = room * h + index;
-			line[0].position = sf::Vector2f(m_RoomsX.front() * w, y);
-			line[1].position = sf::Vector2f(m_RoomsX.back() * w + w, y);
-			m_grid.push_back(line);
-			index += 64;
+			// DO SOMTHING
 		}
 	}
-
-
-	int index = m_RoomsX.front();
-
-	while (index <= static_cast<int>(m_RoomsX.size()))
-	{
-		sf::VertexArray quad(sf::Quads, 4);
-		quad[0].color = sf::Color::Red;
-		quad[1].color = sf::Color::Red;
-		quad[2].color = sf::Color::Red;
-		quad[3].color = sf::Color::Red;
-		quad[0].position = sf::Vector2f(index * w + 2, h * (m_RoomsY.back() + 1));
-		quad[2].position = sf::Vector2f(index * w - 2, h *  m_RoomsY.front());
-		quad[1].position = sf::Vector2f(index * w - 2, h * (m_RoomsY.back() + 1));
-		quad[3].position = sf::Vector2f(index * w + 2, h * m_RoomsY.front());
-		m_grid.push_back(quad);
-		index++;
-	}
-
-	index = m_RoomsY.front();
-
-	while (index <= static_cast<int>(m_RoomsY.size()))
-	{
-		sf::VertexArray quad(sf::Quads, 4);
-		quad[0].color = sf::Color::Red;
-		quad[1].color = sf::Color::Red;
-		quad[2].color = sf::Color::Red;
-		quad[3].color = sf::Color::Red;
-		quad[0].position = sf::Vector2f(w * (m_RoomsX.back() + 1), index * h - 2);
-		quad[2].position = sf::Vector2f(w *  m_RoomsX.front(), index * h + 2);
-		quad[1].position = sf::Vector2f(w * (m_RoomsX.back() + 1), index * h + 2);
-		quad[3].position = sf::Vector2f(w * m_RoomsX.front(), index * h - 2);
-		m_grid.push_back(quad);
-		index++;
-	}
 }
+
 
 
 /**
@@ -465,15 +400,27 @@ void GameState_Play::gridBuilder()
 void GameState_Play::sAnimation()
 {
 
+	std::string playerState = m_player->getComponent<CState>()->state;
 
-	// Implement updating and setting of all animations here
-	// std::string playerState = m_player->getComponent<CState>()->state;
+	/* Retreive the players Animation name.*/
+	std::string animationName = m_player->getComponent<CAnimation>()->animation.getName();
 
-	//  Retreive the players Wnimation name.
-	// std::string animationName = m_player->getComponent<CAnimation>()->animation.getName();
+	if (playerState == "stand"  && animationName != "player_stand")
+	{
+		m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_stand"), true);
+	}
+	else if (playerState == "jump"  && animationName != "player_jump")
+	{
+		m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_jump"), true);
+	}
+	else if (playerState == "run" && animationName != "player_run")
+	{
+		m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_run"), true);
+	}
 
 
-	// check all entities for their animation, if ended, delete entity
+
+
 	for (auto e : m_entityManager.getEntities())
 	{
 		if (e->getComponent<CAnimation>()->animation.hasEnded() && !e->getComponent<CAnimation>()->repeat) 	{ e->destroy(); }
@@ -541,27 +488,9 @@ void GameState_Play::sRender()
 	sf::View view(m_game.window().getDefaultView());
 
 
-
 	/* Set camera to follow player */
-
-	if (m_follow)
-	{
-
-		view.setCenter(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y);
-		m_game.window().setView(view);
-	}
-
-	/* Else adjust the players location based off the room they are in.*/
-	else
-	{
-		auto window_size = m_game.window().getDefaultView().getSize();
-		Vec2 player_pos = m_player->getComponent<CTransform>()->pos;
-		float x = window_size.x * floor(player_pos.x / window_size.x);
-		float y = window_size.y * floor(player_pos.y / window_size.y);
-		view.move(x, y);
-		view.setCenter(view.getCenter());
-		m_game.window().setView(view);
-	}
+	view.setCenter(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y - m_game.window().getDefaultView().getSize().y /2 + 96 );
+	m_game.window().setView(view); 
 
 	/* draw all Entity textures / animations */
 	if (m_drawTextures)

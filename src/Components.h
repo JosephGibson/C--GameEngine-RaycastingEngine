@@ -51,10 +51,6 @@ public:
     bool right      = false;
     bool shoot      = false;
     bool canShoot   = true;
-	bool plus       = false;
-	bool minus      = false;
-	bool zoomOut      = false;
-	bool zoomIn = false;
     CInput() {}
 };
 
@@ -89,7 +85,7 @@ public:
 class CState : public Component
 {
 public:
-    std::string state = "attack";
+    std::string state = "";
     size_t frames = 0;
     CState(const std::string & s) : state(s) {}
 };
@@ -111,12 +107,4 @@ public:
     size_t currentPosition = 0;
     float speed = 0;
     CPatrol(std::vector<Vec2> & pos, float s) : positions(pos), speed(s) {}
-};
-
-class CDraggable : public Component
-{
-public:
-	bool draggable;
-	CDraggable(const bool & drag) { draggable = drag; }
-
 };

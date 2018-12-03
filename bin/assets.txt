@@ -1,5 +1,29 @@
-Texture   TexBlack      images/tloz/tile_black.png
+Texture   TexBlack      images/tiles/tile_black.png
+Texture   tex_rust_1      images/tiles/rust_1.jpg
+Texture   tex_rust_2      images/tiles/rust_2.jpg
+Texture   tex_rust_3      images/tiles/rust_3.jpg
+Texture   tex_rust_4      images/tiles/rust_4.jpg
+Texture   tex_concrete_1      images/tiles/concrete_1.jpg
+Texture   tex_concrete_2      images/tiles/concrete_2.jpg
+Texture   tex_concrete_3      images/tiles/concrete_3.jpg
+Texture   tex_concrete_4      images/tiles/concrete_4.jpg
+Texture   tex_concrete_5      images/tiles/concrete_5.jpg
+Texture   tex_player_stand      images/player/player_stand.png
+Texture   tex_player_run      images/player/player_walk.png
+Texture   tex_player_jump      images/player/player_jump.png
+Texture   tex_spider_run      images/npc/spider_run.png
+Animation rust_1         tex_rust_1        1    0
+Animation rust_2         tex_rust_2        1    0
+Animation rust_3         tex_rust_3        1    0
+Animation rust_4         tex_rust_4        1    0
+Animation concrete_1         tex_concrete_1        1    0
+Animation concrete_2         tex_concrete_2        1    0
+Animation concrete_3         tex_concrete_3        1    0
+Animation concrete_4         tex_concrete_4        1    0
+Animation concrete_5         tex_concrete_5        1    0
+Animation player_stand         tex_player_stand        1    0
+Animation player_run         tex_player_run        4    7
+Animation player_jump         tex_player_jump        1    0
+Animation spider_run         tex_spider_run        5    8
 Animation Black         TexBlack        1    0
 Font      Arial      fonts/arial.ttf
-Font      Mario      fonts/mario.ttf
-Font      Megaman    fonts/megaman.ttf

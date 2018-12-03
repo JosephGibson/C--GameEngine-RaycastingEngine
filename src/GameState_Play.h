@@ -28,13 +28,11 @@ protected:
 
 
 
-	std::vector<sf::VertexArray> m_grid;
     sf::Text                    m_saveText;
     void init(const std::string & levelPath);
     void loadLevel(const std::string & filename);
     void update();
     void spawnPlayer();
-	void gridBuilder();
     void sMovement();
     void sAI();
     void sLifespan();
