@@ -27,3 +27,4 @@ Animation player_jump         tex_player_jump        1    0
 Animation spider        tex_spider_run        3    5
 Animation Black         TexBlack        1    0
 Font      Arial      fonts/arial.ttf
+Font      titleFont      fonts/titleFont.ttf

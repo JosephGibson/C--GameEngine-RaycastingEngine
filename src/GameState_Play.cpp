@@ -13,11 +13,13 @@ GameState_Play::GameState_Play(GameEngine & game, const std::string & levelPath)
 	init(m_levelPath);
 }
 
+
 /**
  * @brief      Intializes the game state
  *
  * @param[in]  levelPath  The level path
  */
+
 void GameState_Play::init(const std::string & levelPath)
 {
 
@@ -30,6 +32,7 @@ void GameState_Play::init(const std::string & levelPath)
  *
  * @param[in]  filename  The filename
  */
+
 void GameState_Play::loadLevel(const std::string & filename)
 {
 	m_entityManager = EntityManager();
@@ -103,14 +106,14 @@ void GameState_Play::loadLevel(const std::string & filename)
 			}
 		}
 	}
-
 	spawnPlayer();
-
 }
+
 
 /**
  * @brief      { A function to spawn in a player based of config }
  */
+
 void GameState_Play::spawnPlayer()
 {
 	m_player = m_entityManager.addEntity("player");
@@ -121,12 +124,14 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, true);;
 	m_player->addComponent<CGravity>(m_playerConfig.Gravity);
 	m_player->addComponent<CState>("stand");
+	m_player->addComponent<CLight>(25);
 }
 
 
 /**
  * @brief      { The main loop of the engine }
  */
+
 void GameState_Play::update()
 {
 	m_entityManager.update();
@@ -137,12 +142,14 @@ void GameState_Play::update()
 		sLifespan();
 		sCollision();
 		sAnimation();
+		sLight();
 		sUserInput();
 		sRender();
 	}
 	else
 	{
 		sAnimation();
+		sLight();
 		sUserInput();
 		sRender();
 	}
@@ -358,57 +365,6 @@ void GameState_Play::sCollision()
 
 	bool player_grounded = false;
 
-	/* Check every tile for cols with player.*/
-	for (auto & tile : m_entityManager.getEntities("Tile"))
-	{
-		if (tile->hasComponent<CBoundingBox>() && tile->getComponent<CBoundingBox>()->blockMove)
-		{
-
-			/*Player tile collision control block: */
-			Vec2 overLap = Physics::GetOverlap(m_player, tile);
-
-			if (overLap.x >= 0 && overLap.y >= 0)
-			{
-				/* The previous overlap to resolve col.*/
-				Vec2 prevOverLap =  Physics::GetPreviousOverlap(m_player, tile);
-
-				/* Check for X collison, resolve first.*/
-				if (prevOverLap.y > 0)
-				{
-					if (m_player->getComponent<CTransform>()->prevPos.x < tile->getComponent<CTransform>()->pos.x)
-					{
-						m_player->getComponent<CTransform>()->pos.x -= overLap.x;
-					}
-					else
-					{
-						m_player->getComponent<CTransform>()->pos.x += overLap.x;
-					}
-				}
-
-				/* Check for Y Collisions */
-				else if (prevOverLap.x > 0)
-				{
-					/* Check bottom of the tile for Col: */
-					if (m_player->getComponent<CTransform>()->prevPos.y < tile->getComponent<CTransform>()->pos.y)
-					{
-						m_player->getComponent<CTransform>()->pos.y -= overLap.y;
-					}
-
-					/* Check top for Col. Accepts: prevOverLap.x = 0 */
-					else
-					{
-						m_player->getComponent<CTransform>()->pos.y += overLap.y;
-						player_grounded = true;
-					}
-				}
-
-			}
-
-			/* Do NPC tile col, this could be wrapped in anoter function since its the same as player col.*/
-		}
-	}
-
-
 	/** Check for NPC cols**/
 	for (auto & npc : m_entityManager.getEntities("NPC"))
 	{
@@ -505,6 +461,59 @@ void GameState_Play::sCollision()
 		}
 	}
 
+
+
+	/* Check every tile for cols with player.*/
+	for (auto & tile : m_entityManager.getEntities("Tile"))
+	{
+		if (tile->hasComponent<CBoundingBox>() && tile->getComponent<CBoundingBox>()->blockMove)
+		{
+
+			/*Player tile collision control block: */
+			Vec2 overLap = Physics::GetOverlap(m_player, tile);
+
+			if (overLap.x >= 0 && overLap.y >= 0)
+			{
+				/* The previous overlap to resolve col.*/
+				Vec2 prevOverLap =  Physics::GetPreviousOverlap(m_player, tile);
+
+				/* Check for X collison, resolve first.*/
+				if (prevOverLap.y > 0)
+				{
+					if (m_player->getComponent<CTransform>()->prevPos.x < tile->getComponent<CTransform>()->pos.x)
+					{
+						m_player->getComponent<CTransform>()->pos.x -= overLap.x;
+					}
+					else
+					{
+						m_player->getComponent<CTransform>()->pos.x += overLap.x;
+					}
+				}
+
+				/* Check for Y Collisions */
+				else if (prevOverLap.x > 0)
+				{
+					/* Check bottom of the tile for Col: */
+					if (m_player->getComponent<CTransform>()->prevPos.y < tile->getComponent<CTransform>()->pos.y)
+					{
+						m_player->getComponent<CTransform>()->pos.y -= overLap.y;
+					}
+
+					/* Check top for Col. Accepts: prevOverLap.x = 0 */
+					else
+					{
+						m_player->getComponent<CTransform>()->pos.y += overLap.y;
+						player_grounded = true;
+					}
+				}
+
+			}
+
+			/* Do NPC tile col, this could be wrapped in anoter function since its the same as player col.*/
+		}
+	}
+
+
 	if (player_grounded)
 	{
 		m_player->getComponent<CState>()->grounded = true;
@@ -518,8 +527,9 @@ void GameState_Play::sCollision()
 
 
 /**
- * [GameState_Play::sAnimation description]
+ * @brief      { The animation system }
  */
+
 void GameState_Play::sAnimation()
 {
 
@@ -541,9 +551,7 @@ void GameState_Play::sAnimation()
 		m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_run"), true);
 	}
 
-
-
-
+	/** Update NPC animations **/
 	for (auto e : m_entityManager.getEntities())
 	{
 		if (e->getComponent<CAnimation>()->animation.hasEnded() && !e->getComponent<CAnimation>()->repeat) 	{ e->destroy(); }
@@ -553,8 +561,142 @@ void GameState_Play::sAnimation()
 }
 
 /**
- * [GameState_Play::sUserInput description]
+ * @brief      { The lighting system }
  */
+
+void GameState_Play::sLight()
+{
+	m_Light_Lines.clear();
+	/*	For every vert in a tile cast a point to the player. */
+	for (auto & end_tile : m_entityManager.getEntities("Tile"))
+	{
+		if (end_tile->hasComponent<CBoundingBox>() && end_tile->getComponent<CBoundingBox>()->blockVision)
+		{
+			std::vector<bool> points(4);
+			points[0] = true;
+			points[1] = true;
+			points[2] = true;
+			points[3] = true;
+
+
+			Vec2 pPos = m_player->getComponent<CTransform>()->pos;
+			pPos.y = 768 - pPos.y;
+
+			Vec2 end_origin = end_tile->getComponent<CTransform>()->pos;
+			end_origin.y = 768 - end_origin.y;
+			Vec2 end_bb = end_tile->getComponent<CBoundingBox>()->halfSize;
+
+
+			Vec2 end_v1 = Vec2(end_origin.x - end_bb.x, end_origin.y - end_bb.y);
+			Vec2 end_v2 = Vec2(end_origin.x + end_bb.x, end_origin.y - end_bb.y);
+			Vec2 end_v3 = Vec2(end_origin.x + end_bb.x, end_origin.y + end_bb.y);
+			Vec2 end_v4 = Vec2(end_origin.x - end_bb.x, end_origin.y + end_bb.y);
+
+			for (int i = 0; i < 4; i++)
+			{
+				Vec2 vert;
+				switch (i)
+				{
+				case 0:
+					vert = end_v1;
+					break;
+				case 1:
+					vert = end_v2;
+					break;
+				case 2:
+					vert = end_v3;
+					break;
+				case 3:
+					vert = end_v4;
+					break;
+				}
+
+				for (auto & intersect_tile : m_entityManager.getEntities("Tile"))
+				{
+						Vec2 intersect_origin = intersect_tile->getComponent<CTransform>()->pos;
+						intersect_origin.y = 768 - intersect_origin.y;
+						Vec2 intersect_bb = intersect_tile->getComponent<CBoundingBox>()->halfSize;
+
+						Vec2 int_v1 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y - intersect_bb.y);
+						Vec2 int_v2 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y - intersect_bb.y);
+						Vec2 int_v3 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y + intersect_bb.y);
+						Vec2 int_v4 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y + intersect_bb.y);
+
+
+						if (Physics::LineIntersect(pPos, vert, int_v1, int_v2)) {points[i] = false; break;}
+						else if (Physics::LineIntersect(pPos, vert, int_v2, int_v3)) {points[i] = false; break;}
+						else if (Physics::LineIntersect(pPos, vert, int_v3, int_v4)) {points[i] = false; break;}
+						else if (Physics::LineIntersect(pPos, vert, int_v4, int_v1)) {points[i] = false; break;}
+
+
+				}
+			}
+
+			for (int j = 0; j < 4; j++)
+			{
+				if (points[j])
+				{
+
+					Vec2 vert;
+					switch (j)
+					{
+					case 0:
+						vert = end_v1;
+						break;
+					case 1:
+						vert = end_v2;
+						break;
+					case 2:
+						vert = end_v3;
+						break;
+					case 3:
+						vert = end_v4;
+						break;
+					}
+
+
+					sf::VertexArray lines(sf::LinesStrip, 2);
+					lines[0].position.x = m_player->getComponent<CTransform>()->pos.x;
+					lines[0].position.y = m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y;
+					lines[1].position.x = vert.x;
+					lines[1].position.y = vert.y;
+					if (j == 0)
+					{
+						lines[0].color = sf::Color::Red;
+						lines[1].color = sf::Color::Red;
+					}
+					else if (j == 1)
+					{
+						lines[0].color = sf::Color::Blue;
+						lines[1].color = sf::Color::Blue;
+					}
+					else if (j == 2)
+					{
+						lines[0].color = sf::Color::Green;
+						lines[1].color = sf::Color::Green;
+					}
+					else if (j == 3)
+					{
+						lines[0].color = sf::Color::Black;
+						lines[1].color = sf::Color::Black;
+					}
+					m_Light_Lines.push_back(lines);
+				}
+			}
+
+
+		}
+	}
+
+
+
+}
+
+
+/**
+ * @brief      { The user input system.}
+ */
+
 void GameState_Play::sUserInput()
 {
 	auto pInput = m_player->getComponent<CInput>();
@@ -579,9 +721,7 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::S:       { pInput->down = true; break; }
 			case sf::Keyboard::D:       { pInput->right = true; break; }
 			case sf::Keyboard::Z:       { init(m_levelPath); break; }
-			case sf::Keyboard::R:       { m_drawTextures = !m_drawTextures; break; }
 			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
-			case sf::Keyboard::Y:       { m_follow = !m_follow; break; }
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
 			default : {break;}
 			}
@@ -616,21 +756,20 @@ void GameState_Play::sRender()
 	m_game.window().setView(view);
 
 	/* draw all Entity textures / animations */
-	if (m_drawTextures)
-	{
-		for (auto e : m_entityManager.getEntities())
-		{
-			auto transform = e->getComponent<CTransform>();
 
-			{
-				auto animation = e->getComponent<CAnimation>()->animation;
-				animation.getSprite().setRotation(transform->angle);
-				animation.getSprite().setPosition(transform->pos.x, m_game.window().getDefaultView().getSize().y -  transform->pos.y);
-				animation.getSprite().setScale(transform->scale.x,  transform->scale.y);
-				m_game.window().draw(animation.getSprite());
-			}
+	for (auto e : m_entityManager.getEntities())
+	{
+		auto transform = e->getComponent<CTransform>();
+
+		{
+			auto animation = e->getComponent<CAnimation>()->animation;
+			animation.getSprite().setRotation(transform->angle);
+			animation.getSprite().setPosition(transform->pos.x, m_game.window().getDefaultView().getSize().y -  transform->pos.y);
+			animation.getSprite().setScale(transform->scale.x,  transform->scale.y);
+			m_game.window().draw(animation.getSprite());
 		}
 	}
+
 
 
 	// draw all Entity collision bounding boxes with a rectangleshape
@@ -678,12 +817,17 @@ void GameState_Play::sRender()
 				lines[1].position.y = m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y;
 				lines[1].color = sf::Color::Black;
 				m_game.window().draw(lines);
-				dot.setPosition(e->getComponent<CFollowPlayer>()->home.x, e->getComponent<CFollowPlayer>()->home.y);
+				dot.setPosition(e->getComponent<CFollowPlayer>()->home.x, m_game.window().getDefaultView().getSize().y - e->getComponent<CFollowPlayer>()->home.y);
 				m_game.window().draw(dot);
 			}
 		}
 
 
+	}
+
+	for (auto line : m_Light_Lines)
+	{
+		m_game.window().draw(line);
 	}
 
 

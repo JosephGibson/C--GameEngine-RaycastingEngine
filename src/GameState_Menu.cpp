@@ -13,17 +13,13 @@ GameState_Menu::GameState_Menu(GameEngine & game)
 
 void GameState_Menu::init(const std::string & menuConfig)
 {
-	m_title = "Some Title Here";
+	m_menuText.setFont(m_game.getAssets().getFont("titleFont"));
+	m_title = "LIGHTFALL";
 	m_menuStrings.push_back("Level  1");
-//	m_menuStrings.push_back("Level  2");
-//	m_menuStrings.push_back("Level  3");
-
 	m_levelPaths.push_back("level1.txt");
+	m_menuStrings.push_back("Level  2");
 	m_levelPaths.push_back("level2.txt");
-//	m_levelPaths.push_back("level3.txt");
 
-	m_menuText.setFont(m_game.getAssets().getFont("Arial"));
-	m_menuText.setCharacterSize(64);
 }
 
 void GameState_Menu::update()
@@ -83,18 +79,18 @@ void GameState_Menu::sRender()
 	m_game.window().clear(sf::Color(0, 0, 0));
 
 	// draw the game title in the top-left of the screen
-	m_menuText.setCharacterSize(48);
+	m_menuText.setCharacterSize(128);
 	m_menuText.setString(m_title);
 	m_menuText.setFillColor(sf::Color::White);
-	m_menuText.setPosition(sf::Vector2f(10, 10));
+	m_menuText.setPosition(sf::Vector2f(500, 10));
 	m_game.window().draw(m_menuText);
-
+	m_menuText.setCharacterSize(56);
 	// draw all of the menu options
 	for (size_t i = 0; i < m_menuStrings.size(); i++)
 	{
 		m_menuText.setString(m_menuStrings[i]);
-		m_menuText.setFillColor(i == m_selectedMenuIndex ? sf::Color::White : sf::Color(100, 100, 100));
-		m_menuText.setPosition(sf::Vector2f(10, 110 + i * 72));
+		m_menuText.setFillColor(i == m_selectedMenuIndex ? sf::Color::Red : sf::Color::White);
+		m_menuText.setPosition(sf::Vector2f(25, 250 + i * 72));
 		m_game.window().draw(m_menuText);
 	}
 

@@ -6,9 +6,9 @@
 
 #include "EntityManager.h"
 
-struct PlayerConfig 
-{ 
-    float X, Y, CX, CY, SPEED, Gravity, JumpSpeed;
+struct PlayerConfig
+{
+	float X, Y, CX, CY, SPEED, Gravity, JumpSpeed;
 };
 
 class GameState_Play : public GameState
@@ -16,35 +16,36 @@ class GameState_Play : public GameState
 
 protected:
 
-    EntityManager            m_entityManager;
-    std::shared_ptr<Entity>  m_player;
-    std::string              m_levelPath;
-    PlayerConfig             m_playerConfig;
-    bool                     m_drawTextures = true;
-    bool                     m_drawCollision = true;
-    bool                     m_follow = false;
-	std::vector<int>		 m_RoomsX = {-1, 0, 1};
-	std::vector<int>		 m_RoomsY = {-1, 0, 1};
+	EntityManager            m_entityManager;
+	std::shared_ptr<Entity>  m_player;
+	std::string              m_levelPath;
+	PlayerConfig             m_playerConfig;
+	bool                     m_drawCollision = true;
+	bool                     m_follow = false;
+	std::vector<int>         m_RoomsX = { -1, 0, 1};
+	std::vector<int>         m_RoomsY = { -1, 0, 1};
+	std::vector<sf::VertexArray> m_Light_Lines;
+
+	/** Helper Methods **/
+	void init(const std::string & levelPath);
+	void loadLevel(const std::string & filename);
+	void update();
+	void spawnPlayer();
 
 
-
-    sf::Text                    m_saveText;
-    void init(const std::string & levelPath);
-    void loadLevel(const std::string & filename);
-    void update();
-    void spawnPlayer();
-    void sMovement();
-    void sAI();
-    void sLifespan();
-    void sUserInput();
-    void sAnimation();
-    void sCollision();
-    void sRender();
-
+	/** Systems **/
+	void sMovement();
+	void sAI();
+	void sLifespan();
+	void sUserInput();
+	void sAnimation();
+	void sCollision();
+	void sRender();
+	void sLight();
 
 
 public:
 
-    GameState_Play(GameEngine & game, const std::string & levelPath);
+	GameState_Play(GameEngine & game, const std::string & levelPath);
 
 };

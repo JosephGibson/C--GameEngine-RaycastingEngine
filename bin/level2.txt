@@ -1,0 +1,5 @@
+Tile rust_1 0 1 1 1
+Tile rust_3 2 2 1 1
+Tile rust_4 4 2 1 1
+Player 0 2 30 64 5 0.25 8
+

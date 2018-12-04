@@ -101,6 +101,13 @@ public:
     
 };
 
+class CLight : public Component
+{
+    public:
+        float dist = 0;
+        CLight(const float d): dist(d) {}
+};
+
 class CPatrol : public Component
 {
 public:
