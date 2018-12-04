@@ -17,8 +17,7 @@
 - Unlike the asignments, the player is specifed by tiles.
 - There are no rooms, only tiles.
 - A background image may be specifed.
-
-
+- All NPC's have a gravity compontent. 
 
 #### Additional components:
 

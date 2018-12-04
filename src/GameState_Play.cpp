@@ -44,10 +44,10 @@ void GameState_Play::loadLevel(const std::string & filename)
 		/*Player found, load.*/
 		if (token == "Player")
 		{
-			float x,y;
+			float x, y;
 			file >> x >> y >> m_playerConfig.CX >> m_playerConfig.CY >> m_playerConfig.SPEED;
-			m_playerConfig.X = (x*64) + 32;
-			m_playerConfig.Y = -((y*64) + 32);
+			m_playerConfig.X = x * 64 + 32;
+			m_playerConfig.Y = y * 64 + 32;
 		}
 
 		/*Tile found, load.*/
@@ -58,7 +58,7 @@ void GameState_Play::loadLevel(const std::string & filename)
 			int BM, BV;
 			file >> name >> TX >> TY >> BM >> BV;
 			auto e = m_entityManager.addEntity(token);
-			e->addComponent<CTransform>()->pos = Vec2((TX * 64) + 32, -((TY * 64) + 32));
+			e->addComponent<CTransform>()->pos = Vec2(TX * 64 + 32, TY * 64 + 32);
 			e->addComponent<CAnimation>(m_game.getAssets().getAnimation(name), true);
 			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize(), BM, BV);
 		}
@@ -66,22 +66,22 @@ void GameState_Play::loadLevel(const std::string & filename)
 		/*NPC found, load.*/
 		else if (token == "NPC")
 		{
+
 			std::string name, aiName;
-			int BM, BV, speed;
-			float TY, TX;
-			file >> name >> TX >> TY >> BM >> BV >> aiName;
-
+			int BM, BV;
+			float TY, TX, grav, speed;
+			file >> name >> TX >> TY >> BM >> BV >> grav >> aiName;
 			auto e = m_entityManager.addEntity(token);
-			e->addComponent<CTransform>()->pos = Vec2((TX * 64) + 32, (TY * 64) + 32);
 			e->addComponent<CAnimation>(m_game.getAssets().getAnimation(name), true);
+			e->addComponent<CTransform>()->pos = Vec2((TX * 64) + e->getComponent<CAnimation>()->animation.getSize().x / 2, TY * 64 + e->getComponent<CAnimation>()->animation.getSize().y / 2);
 			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize(), BM, BV);
-			m_player->addComponent<CGravity>(0.5);
-
+			e->addComponent<CState>("STATE_NAME_HERE");
+			e->addComponent<CGravity>(grav);
 			if ( aiName == "Follow")
 			{
 				file >> speed;
 				e->addComponent<CFollowPlayer>(Vec2(0, 0), speed);
-				e->getComponent<CFollowPlayer>()->home = Vec2((TX * 64) + 32, (TY * 64)  + 32);
+				e->getComponent<CFollowPlayer>()->home = Vec2((TX * 64) + e->getComponent<CAnimation>()->animation.getSize().x / 2, TY * 64 + e->getComponent<CAnimation>()->animation.getSize().y / 2);
 			}
 
 			else if ( aiName == "Patrol")
@@ -93,7 +93,7 @@ void GameState_Play::loadLevel(const std::string & filename)
 				while (i < points)
 				{
 					file >> x >> y;
-					pos.push_back(Vec2((x * 64) + 32, (y * 64) + 32));
+					pos.push_back(Vec2((TX * 64) + e->getComponent<CAnimation>()->animation.getSize().x / 2, TY * 64 + e->getComponent<CAnimation>()->animation.getSize().y / 2));
 					i++;
 				}
 				e->addComponent<CPatrol>(pos, speed);
@@ -113,7 +113,7 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_stand"), true);
 	m_player->addComponent<CInput>();
 	m_player->addComponent<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, true);;
-	m_player->addComponent<CGravity>(0.5);
+	m_player->addComponent<CGravity>(0.2);
 	m_player->addComponent<CState>("stand");
 }
 
@@ -126,7 +126,7 @@ void GameState_Play::update()
 	m_entityManager.update();
 	if (!m_paused)
 	{
-		//	sAI();
+		sAI();
 		sMovement();
 		sLifespan();
 		sCollision();
@@ -151,25 +151,20 @@ void GameState_Play::sMovement()
 	/* Do NPC speed asignments for current cycle */
 	for (auto &  npc : m_entityManager.getEntities("NPC"))
 	{
+		//	std::cout << npc->getComponent<CTransform>()->pos.x << " " << npc->getComponent<CTransform>()->pos.y << std::endl;
+		if (!npc->getComponent<CState>()->grounded)
+		{
+			npc->getComponent<CTransform>()->speed.y -= npc->getComponent<CGravity>()->gravity;
+		}
 		npc->getComponent<CTransform>()->prevPos = npc->getComponent<CTransform>()->pos;
 		npc->getComponent<CTransform>()->pos += npc->getComponent<CTransform>()->speed;
 	}
 
-
 	/* Save players speed for easy access. */
-	Vec2 speed = Vec2(0, 0);
+	Vec2 speed = m_player->getComponent<CTransform>()->speed;
 	auto pInput = m_player->getComponent<CInput>();
 	std::string state = "stand";
 
-	if (pInput->up)
-	{
-		speed.y = -3.5;
-		state = "jump";
-	}
-	else if (pInput->down)
-	{
-		speed.y = 3.5;
-	}
 
 	if (pInput->right)
 	{
@@ -182,6 +177,26 @@ void GameState_Play::sMovement()
 		speed.x = -3.5;
 		m_player->getComponent<CTransform>()->scale.x = -1;
 		state = "run";
+	}
+	else
+	{
+		speed.x = 0;
+	}
+
+
+	if (!m_player->getComponent<CState>()->grounded)
+	{
+		speed.y -= m_player->getComponent<CGravity>()->gravity;
+		state = "jump";
+	}
+	else if (pInput->up)
+	{
+		speed.y = 5;
+		state = "jump";
+	}
+	else
+	{
+		speed.y = 0;
 	}
 
 	/* Set m_players PrevPos = Pos, Set Pos += Speed */
@@ -221,14 +236,36 @@ void GameState_Play::sAI()
 			{
 				Vec2 Norm = (m_player->getComponent<CTransform>()->pos - npc->getComponent<CTransform>()->pos).norm();
 				Norm *= npc->getComponent<CFollowPlayer>()->speed;
-				npc->getComponent<CTransform>()->speed = Norm;
+				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+				{
+					npc->getComponent<CTransform>()->speed = Norm;
+				}
+				else
+				{
+					npc->getComponent<CTransform>()->speed.x = Norm.x;
+				}
+				if (Norm.x < 0)
+				{
+					npc->getComponent<CTransform>()->scale.x = 1;
+				}
+				else
+				{
+					npc->getComponent<CTransform>()->scale.x = -1;
+				}
 			}
 			/* Check if the NPCS is close that a movement would push them too far. */
 			else if (npc->getComponent<CTransform>()->pos.dist(npc->getComponent<CFollowPlayer>()->home) >= npc->getComponent<CFollowPlayer>()->speed * 1.15)
 			{
 				Vec2 Norm = (npc->getComponent<CFollowPlayer>()->home - npc->getComponent<CTransform>()->pos).norm();
 				Norm *= npc->getComponent<CFollowPlayer>()->speed;
-				npc->getComponent<CTransform>()->speed = Norm;
+				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+				{
+					npc->getComponent<CTransform>()->speed = Norm;
+				}
+				else
+				{
+					npc->getComponent<CTransform>()->speed.x = Norm.x;
+				}
 			}
 			/* Else, the player is now home. */
 			else
@@ -261,7 +298,14 @@ void GameState_Play::sAI()
 			{
 				Vec2 Norm = (nextPos - currentPos).norm();
 				Norm *= npc->getComponent<CPatrol>()->speed;
-				npc->getComponent<CTransform>()->speed = Norm;
+				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+				{
+					npc->getComponent<CTransform>()->speed = Norm;
+				}
+				else
+				{
+					npc->getComponent<CTransform>()->speed.x = Norm.x;
+				}
 			}
 			else
 			{
@@ -295,6 +339,7 @@ void GameState_Play::sLifespan()
 
 void GameState_Play::sCollision()
 {
+	bool onGround = false;
 	/* Check every tile for cols with player.*/
 	for (auto & tile : m_entityManager.getEntities("Tile"))
 	{
@@ -335,54 +380,67 @@ void GameState_Play::sCollision()
 					else
 					{
 						m_player->getComponent<CTransform>()->pos.y += overLap.y;
+						m_player->getComponent<CState>()->grounded = true;
+						onGround = true;
 					}
 				}
 
 			}
 
 			/* Do NPC tile col, this could be wrapped in anoter function since its the same as player col.*/
-			for (auto & npc : m_entityManager.getEntities("NPC"))
-			{
-				Vec2 overLap = Physics::GetOverlap(npc, tile);
-				if (overLap.x >= 0 && overLap.y >= 0)
-				{
-
-					/* The previous overlap to resolve col.*/
-					Vec2 prevOverLap = Physics::GetPreviousOverlap(npc, tile);
-
-					if (prevOverLap.y > 0)
-					{
-						if (npc->getComponent<CTransform>()->prevPos.x < tile->getComponent<CTransform>()->pos.x)
-						{
-							npc->getComponent<CTransform>()->pos.x -= overLap.x;
-						}
-						else
-						{
-							npc->getComponent<CTransform>()->pos.x += overLap.x;
-						}
-					}
-					else if (prevOverLap.x > 0)
-					{
-						/* Check bottom of the tile for Col: */
-						if (npc->getComponent<CTransform>()->prevPos.y < tile->getComponent<CTransform>()->pos.y)
-						{
-							npc->getComponent<CTransform>()->pos.y -= overLap.y;
-						}
-
-						/* Check top for Col. Accepts: prevOverLap.x = 0 */
-						else
-						{
-							npc->getComponent<CTransform>()->pos.y += overLap.y;
-						}
-
-					}
-				}
-			}
 		}
+	}
+	if (!onGround)
+	{
+		m_player->getComponent<CState>()->grounded = false;
 	}
 	/* Check for sword enemy cols */
 	for (auto & npc : m_entityManager.getEntities("NPC"))
 	{
+		bool onGround = false;
+		for (auto & tile : m_entityManager.getEntities("Tile"))
+		{
+			Vec2 overLap = Physics::GetOverlap(npc, tile);
+			if (overLap.x >= 0 && overLap.y >= 0)
+			{
+
+				/* The previous overlap to resolve col.*/
+				Vec2 prevOverLap = Physics::GetPreviousOverlap(npc, tile);
+
+				if (prevOverLap.y > 0)
+				{
+					if (npc->getComponent<CTransform>()->prevPos.x < tile->getComponent<CTransform>()->pos.x)
+					{
+						npc->getComponent<CTransform>()->pos.x -= overLap.x;
+					}
+					else
+					{
+						npc->getComponent<CTransform>()->pos.x += overLap.x;
+					}
+				}
+				else if (prevOverLap.x > 0)
+				{
+					/* Check bottom of the tile for Col: */
+					if (npc->getComponent<CTransform>()->prevPos.y < tile->getComponent<CTransform>()->pos.y)
+					{
+						npc->getComponent<CTransform>()->pos.y -= overLap.y;
+					}
+
+					/* Check top for Col. Accepts: prevOverLap.x = 0 */
+					else
+					{
+						npc->getComponent<CTransform>()->pos.y += overLap.y;
+						npc->getComponent<CState>()->grounded = true;
+						onGround = true;
+					}
+
+				}
+			}
+		}
+		if (!onGround)
+		{
+			npc->getComponent<CState>()->grounded = false;
+		}
 		/*Check for player NPC overlaps */
 		Vec2 playerOverLap = Physics::GetOverlap(m_player, npc);
 		if (playerOverLap.x >= 0 && playerOverLap.y >= 0)
@@ -489,8 +547,8 @@ void GameState_Play::sRender()
 
 
 	/* Set camera to follow player */
-	view.setCenter(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y - m_game.window().getDefaultView().getSize().y /2 + 96 );
-	m_game.window().setView(view); 
+	view.setCenter(m_player->getComponent<CTransform>()->pos.x, m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y);
+	m_game.window().setView(view);
 
 	/* draw all Entity textures / animations */
 	if (m_drawTextures)
@@ -499,68 +557,15 @@ void GameState_Play::sRender()
 		{
 			auto transform = e->getComponent<CTransform>();
 
-			if (e->hasComponent<CAnimation>())
 			{
 				auto animation = e->getComponent<CAnimation>()->animation;
 				animation.getSprite().setRotation(transform->angle);
-				animation.getSprite().setPosition(transform->pos.x, transform->pos.y);
-				animation.getSprite().setScale(transform->scale.x, transform->scale.y);
+				animation.getSprite().setPosition(transform->pos.x, m_game.window().getDefaultView().getSize().y -  transform->pos.y);
+				animation.getSprite().setScale(transform->scale.x,  transform->scale.y);
 				m_game.window().draw(animation.getSprite());
 			}
 		}
 	}
 
-	// draw all Entity collision bounding boxes with a rectangleshape
-	if (m_drawCollision)
-	{
-		sf::CircleShape dot(4);
-		dot.setFillColor(sf::Color::Black);
-		for (auto e : m_entityManager.getEntities())
-		{
-			if (e->hasComponent<CBoundingBox>())
-			{
-				auto box = e->getComponent<CBoundingBox>();
-				auto transform = e->getComponent<CTransform>();
-				sf::RectangleShape rect;
-				rect.setSize(sf::Vector2f(box->size.x - 1, box->size.y - 1));
-				rect.setOrigin(sf::Vector2f(box->halfSize.x, box->halfSize.y));
-				rect.setPosition(transform->pos.x, transform->pos.y);
-				rect.setFillColor(sf::Color(0, 0, 0, 0));
-
-				if (box->blockMove && box->blockVision) { rect.setOutlineColor(sf::Color::Black); }
-				if (box->blockMove && !box->blockVision) { rect.setOutlineColor(sf::Color::Blue); }
-				if (!box->blockMove && box->blockVision) { rect.setOutlineColor(sf::Color::Red); }
-				if (!box->blockMove && !box->blockVision) { rect.setOutlineColor(sf::Color::White); }
-				rect.setOutlineThickness(1);
-				m_game.window().draw(rect);
-			}
-
-			if (e->hasComponent<CPatrol>())
-			{
-				auto & patrol = e->getComponent<CPatrol>()->positions;
-				for (size_t p = 0; p < patrol.size(); p++)
-				{
-					dot.setPosition(patrol[p].x, patrol[p].y);
-					m_game.window().draw(dot);
-				}
-			}
-
-			if (e->hasComponent<CFollowPlayer>())
-			{
-				sf::VertexArray lines(sf::LinesStrip, 2);
-				lines[0].position.x = e->getComponent<CTransform>()->pos.x;
-				lines[0].position.y = e->getComponent<CTransform>()->pos.y;
-				lines[0].color = sf::Color::Black;
-				lines[1].position.x = m_player->getComponent<CTransform>()->pos.x;
-				lines[1].position.y = m_player->getComponent<CTransform>()->pos.y;
-				lines[1].color = sf::Color::Black;
-				m_game.window().draw(lines);
-				dot.setPosition(e->getComponent<CFollowPlayer>()->home.x, e->getComponent<CFollowPlayer>()->home.y);
-				m_game.window().draw(dot);
-			}
-		}
-
-
-	}
 	m_game.window().display();
 }

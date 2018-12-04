@@ -87,6 +87,7 @@ class CState : public Component
 public:
     std::string state = "";
     size_t frames = 0;
+    bool grounded = true;
     CState(const std::string & s) : state(s) {}
 };
 
