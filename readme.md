@@ -17,8 +17,15 @@
 - Unlike the asignments, the player is specifed by tiles.
 - There are no rooms, only tiles.
 - A background image may be specifed.
-- All NPC's have a gravity compontent. 
-
+- All NPC's have a gravity compontent.
+- TilesX/Y, gravity, speed can be floats. 
+- Example:
+- Tile ANIMATION_NAME TileX TileY Blocks_Movement Blocks_Vison
+- Player TileX TileY ColBox_X ColBox_Y Speed Gravity JumpSpeed
+- NPC ANIMATION_NAME TileX TileY Blocks_Movement Blocks_Vison Gravity AI_Types
+- 
+-AI_Types
+-
 #### Additional components:
 
 - NPC Behaviours: patrol, follow, hang.

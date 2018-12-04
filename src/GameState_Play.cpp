@@ -14,8 +14,9 @@ GameState_Play::GameState_Play(GameEngine & game, const std::string & levelPath)
 }
 
 /**
- * [GameState_Play::init description]
- * @param levelPath [description]
+ * @brief      Intializes the game state
+ *
+ * @param[in]  levelPath  The level path
  */
 void GameState_Play::init(const std::string & levelPath)
 {
@@ -23,9 +24,11 @@ void GameState_Play::init(const std::string & levelPath)
 	loadLevel(levelPath);
 }
 
+
 /**
- * [GameState_Play::loadLevel description]
- * @param filename [description]
+ * @brief      Loads a level.
+ *
+ * @param[in]  filename  The filename
  */
 void GameState_Play::loadLevel(const std::string & filename)
 {
@@ -45,7 +48,7 @@ void GameState_Play::loadLevel(const std::string & filename)
 		if (token == "Player")
 		{
 			float x, y;
-			file >> x >> y >> m_playerConfig.CX >> m_playerConfig.CY >> m_playerConfig.SPEED;
+			file >> x >> y >> m_playerConfig.CX >> m_playerConfig.CY >> m_playerConfig.SPEED >> m_playerConfig.Gravity >> m_playerConfig.JumpSpeed;
 			m_playerConfig.X = x * 64 + 32;
 			m_playerConfig.Y = y * 64 + 32;
 		}
@@ -67,8 +70,7 @@ void GameState_Play::loadLevel(const std::string & filename)
 		else if (token == "NPC")
 		{
 
-			std::string name, aiName;
-			int BM, BV;
+			std::string name, aiName;			int BM, BV;
 			float TY, TX, grav, speed;
 			file >> name >> TX >> TY >> BM >> BV >> grav >> aiName;
 			auto e = m_entityManager.addEntity(token);
@@ -77,6 +79,7 @@ void GameState_Play::loadLevel(const std::string & filename)
 			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize(), BM, BV);
 			e->addComponent<CState>("STATE_NAME_HERE");
 			e->addComponent<CGravity>(grav);
+
 			if ( aiName == "Follow")
 			{
 				file >> speed;
@@ -105,6 +108,9 @@ void GameState_Play::loadLevel(const std::string & filename)
 
 }
 
+/**
+ * @brief      { A function to spawn in a player based of config }
+ */
 void GameState_Play::spawnPlayer()
 {
 	m_player = m_entityManager.addEntity("player");
@@ -113,13 +119,13 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_stand"), true);
 	m_player->addComponent<CInput>();
 	m_player->addComponent<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, true);;
-	m_player->addComponent<CGravity>(0.2);
+	m_player->addComponent<CGravity>(m_playerConfig.Gravity);
 	m_player->addComponent<CState>("stand");
 }
 
 
 /**
- * [GameState_Play::update description]
+ * @brief      { The main loop of the engine }
  */
 void GameState_Play::update()
 {
@@ -142,9 +148,11 @@ void GameState_Play::update()
 	}
 }
 
+
 /**
- * [GameState_Play::sMovement description]
+ * @brief      { The Sytem to handle movement and state switching. }
  */
+
 void GameState_Play::sMovement()
 {
 
@@ -155,6 +163,10 @@ void GameState_Play::sMovement()
 		if (!npc->getComponent<CState>()->grounded)
 		{
 			npc->getComponent<CTransform>()->speed.y -= npc->getComponent<CGravity>()->gravity;
+		}
+		else
+		{
+			npc->getComponent<CTransform>()->speed.y = 0;
 		}
 		npc->getComponent<CTransform>()->prevPos = npc->getComponent<CTransform>()->pos;
 		npc->getComponent<CTransform>()->pos += npc->getComponent<CTransform>()->speed;
@@ -191,7 +203,7 @@ void GameState_Play::sMovement()
 	}
 	else if (pInput->up)
 	{
-		speed.y = 5;
+		speed.y = m_playerConfig.JumpSpeed;
 		state = "jump";
 	}
 	else
@@ -206,9 +218,11 @@ void GameState_Play::sMovement()
 	m_player->getComponent<CState>()-> state = state;
 }
 
+
 /**
- * [GameState_Play::sAI description]
+ * @brief      { The AI system. }
  */
+
 void GameState_Play::sAI()
 {
 	/* Check every NPC for AI udates. */
@@ -318,8 +332,9 @@ void GameState_Play::sAI()
 
 
 /**
- * [GameState_Play::sLifespan description]
+ * @brief      { The Life Span Sytem, handles destroying entities. }
  */
+
 void GameState_Play::sLifespan()
 {
 	/* Check all life span clocks to see if ElapsedTime >= Life, Del the entity if so.*/
@@ -333,13 +348,16 @@ void GameState_Play::sLifespan()
 
 }
 
+
 /**
- * [GameState_Play::sCollision description]
+ * @brief      { The collision system. }
  */
 
 void GameState_Play::sCollision()
 {
-	bool onGround = false;
+
+	bool player_grounded = false;
+
 	/* Check every tile for cols with player.*/
 	for (auto & tile : m_entityManager.getEntities("Tile"))
 	{
@@ -380,8 +398,7 @@ void GameState_Play::sCollision()
 					else
 					{
 						m_player->getComponent<CTransform>()->pos.y += overLap.y;
-						m_player->getComponent<CState>()->grounded = true;
-						onGround = true;
+						player_grounded = true;
 					}
 				}
 
@@ -390,14 +407,12 @@ void GameState_Play::sCollision()
 			/* Do NPC tile col, this could be wrapped in anoter function since its the same as player col.*/
 		}
 	}
-	if (!onGround)
-	{
-		m_player->getComponent<CState>()->grounded = false;
-	}
-	/* Check for sword enemy cols */
+
+
+	/** Check for NPC cols**/
 	for (auto & npc : m_entityManager.getEntities("NPC"))
 	{
-		bool onGround = false;
+		bool NPC_Grounded = false;
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
 			Vec2 overLap = Physics::GetOverlap(npc, tile);
@@ -430,23 +445,73 @@ void GameState_Play::sCollision()
 					else
 					{
 						npc->getComponent<CTransform>()->pos.y += overLap.y;
-						npc->getComponent<CState>()->grounded = true;
-						onGround = true;
+						NPC_Grounded = true;
 					}
 
 				}
 			}
+
 		}
-		if (!onGround)
+
+		if (NPC_Grounded)
+		{
+			npc->getComponent<CState>()->grounded = true;
+		}
+		else
 		{
 			npc->getComponent<CState>()->grounded = false;
 		}
-		/*Check for player NPC overlaps */
-		Vec2 playerOverLap = Physics::GetOverlap(m_player, npc);
-		if (playerOverLap.x >= 0 && playerOverLap.y >= 0)
+
+
+		/** Check foor NPC player cols**/
+
+		Vec2 overLap = Physics::GetOverlap(m_player, npc);
+
+		if (overLap.x >= 0 && overLap.y >= 0)
 		{
-			// DO SOMTHING
+			/* The previous overlap to resolve col.*/
+			Vec2 prevOverLap =  Physics::GetPreviousOverlap(m_player, npc);
+
+			/* Check for X collison, resolve first.*/
+			if (prevOverLap.y > 0)
+			{
+				if (m_player->getComponent<CTransform>()->prevPos.x < npc->getComponent<CTransform>()->pos.x)
+				{
+					m_player->getComponent<CTransform>()->pos.x -= overLap.x;
+				}
+				else
+				{
+					m_player->getComponent<CTransform>()->pos.x += overLap.x;
+				}
+			}
+
+			/* Check for Y Collisions */
+			else if (prevOverLap.x > 0)
+			{
+				/* Check bottom of the tile for Col: */
+				if (m_player->getComponent<CTransform>()->prevPos.y < npc->getComponent<CTransform>()->pos.y)
+				{
+					m_player->getComponent<CTransform>()->pos.y -= overLap.y;
+				}
+
+				/* Check top for Col. Accepts: prevOverLap.x = 0 */
+				else
+				{
+					m_player->getComponent<CTransform>()->pos.y += overLap.y;
+					player_grounded = true;
+				}
+			}
+
 		}
+	}
+
+	if (player_grounded)
+	{
+		m_player->getComponent<CState>()->grounded = true;
+	}
+	else
+	{
+		m_player->getComponent<CState>()->grounded = false;
 	}
 }
 
@@ -566,6 +631,61 @@ void GameState_Play::sRender()
 			}
 		}
 	}
+
+
+	// draw all Entity collision bounding boxes with a rectangleshape
+	if (m_drawCollision)
+	{
+		sf::CircleShape dot(4);
+		dot.setFillColor(sf::Color::Black);
+		for (auto e : m_entityManager.getEntities())
+		{
+			if (e->hasComponent<CBoundingBox>())
+			{
+				auto box = e->getComponent<CBoundingBox>();
+				auto transform = e->getComponent<CTransform>();
+				sf::RectangleShape rect;
+				rect.setSize(sf::Vector2f(box->size.x - 1, box->size.y - 1));
+				rect.setOrigin(sf::Vector2f(box->halfSize.x, box->halfSize.y));
+				rect.setPosition(transform->pos.x, m_game.window().getDefaultView().getSize().y - transform->pos.y);
+				rect.setFillColor(sf::Color(0, 0, 0, 0));
+
+				if (box->blockMove && box->blockVision) { rect.setOutlineColor(sf::Color::Black); }
+				if (box->blockMove && !box->blockVision) { rect.setOutlineColor(sf::Color::Blue); }
+				if (!box->blockMove && box->blockVision) { rect.setOutlineColor(sf::Color::Red); }
+				if (!box->blockMove && !box->blockVision) { rect.setOutlineColor(sf::Color::White); }
+				rect.setOutlineThickness(1);
+				m_game.window().draw(rect);
+			}
+
+			if (e->hasComponent<CPatrol>())
+			{
+				auto & patrol = e->getComponent<CPatrol>()->positions;
+				for (size_t p = 0; p < patrol.size(); p++)
+				{
+					dot.setPosition(patrol[p].x, patrol[p].y);
+					m_game.window().draw(dot);
+				}
+			}
+
+			if (e->hasComponent<CFollowPlayer>())
+			{
+				sf::VertexArray lines(sf::LinesStrip, 2);
+				lines[0].position.x = e->getComponent<CTransform>()->pos.x;
+				lines[0].position.y = m_game.window().getDefaultView().getSize().y - e->getComponent<CTransform>()->pos.y;
+				lines[0].color = sf::Color::Black;
+				lines[1].position.x = m_player->getComponent<CTransform>()->pos.x;
+				lines[1].position.y = m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y;
+				lines[1].color = sf::Color::Black;
+				m_game.window().draw(lines);
+				dot.setPosition(e->getComponent<CFollowPlayer>()->home.x, e->getComponent<CFollowPlayer>()->home.y);
+				m_game.window().draw(dot);
+			}
+		}
+
+
+	}
+
 
 	m_game.window().display();
 }

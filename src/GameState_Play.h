@@ -8,7 +8,7 @@
 
 struct PlayerConfig 
 { 
-    float X, Y, CX, CY, SPEED;
+    float X, Y, CX, CY, SPEED, Gravity, JumpSpeed;
 };
 
 class GameState_Play : public GameState
@@ -21,7 +21,7 @@ protected:
     std::string              m_levelPath;
     PlayerConfig             m_playerConfig;
     bool                     m_drawTextures = true;
-    bool                     m_drawCollision = false;
+    bool                     m_drawCollision = true;
     bool                     m_follow = false;
 	std::vector<int>		 m_RoomsX = {-1, 0, 1};
 	std::vector<int>		 m_RoomsY = {-1, 0, 1};

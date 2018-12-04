@@ -16,5 +16,5 @@ Tile rust_2 14 0 1 1
 Tile rust_2 15 0 1 1
 Tile rust_2 16 0 1 1
 Tile rust_2 17 0 1 1
-NPC spider 15 1 1 1 0.5 Follow 2.5
-Player 0 2 30 64 5
+NPC spider 15 1 1 1 0.35 Follow 2.5
+Player 0 2 30 64 5 0.25 8
