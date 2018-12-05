@@ -51,6 +51,11 @@ void Vec2::operator += (const Vec2 & rhs)
 	y += rhs.y;
 }
 
+bool Vec2::operator < (const Vec2 & v2)
+{
+	return clockwise_angle(Vec2(x,y)) < clockwise_angle(v2);
+}
+
 void Vec2::operator -= (const Vec2 & rhs)
 {
 	x -= rhs.x;
@@ -98,3 +103,12 @@ Vec2 Vec2::abs() const
 {
 	return Vec2(x < 0 ? -x : x, y < 0 ? -y : y);
 }
+
+float Vec2::clockwise_angle(const Vec2 & vec) const
+{
+   
+    float angle = 0.0;
+    angle = atan2(vec.x, vec.y);
+    return angle;
+}
+

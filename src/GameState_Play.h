@@ -25,6 +25,7 @@ protected:
 	std::vector<int>         m_RoomsX = { -1, 0, 1};
 	std::vector<int>         m_RoomsY = { -1, 0, 1};
 	std::vector<sf::VertexArray> m_Light_Lines;
+	sf::ConvexShape					m_lightPoly;
 
 	/** Helper Methods **/
 	void init(const std::string & levelPath);
@@ -42,7 +43,6 @@ protected:
 	void sCollision();
 	void sRender();
 	void sLight();
-
 
 public:
 
