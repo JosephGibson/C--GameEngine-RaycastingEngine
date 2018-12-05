@@ -23,7 +23,8 @@ GameState_Play::GameState_Play(GameEngine & game, const std::string & levelPath)
 void GameState_Play::init(const std::string & levelPath)
 {
 
-	m_background.create(1346, 770);
+	m_background.create(1344, 768);
+	m_background.setSmooth(true);
 	loadLevel(levelPath);
 }
 
@@ -828,12 +829,13 @@ void GameState_Play::sRender()
 	m_game.window().clear(sf::Color(255, 192, 122));
 	m_background.clear(sf::Color(15, 15, 15));
 	sf::View view(m_game.window().getDefaultView());
-
+	m_background.setSmooth(true);
 
 	/* Set camera to follow player */
 	view.setCenter(m_player->getComponent<CTransform>()->pos.x, m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y);
 
 	m_game.window().setView(view);
+	//m_background.setView(view);
 
 	/* draw all Entity textures / animations */
 
@@ -905,6 +907,7 @@ void GameState_Play::sRender()
 
 	}
 
+	m_background.setView(view);
 
 
 	for (auto p : m_lightPoly)
@@ -915,14 +918,17 @@ void GameState_Play::sRender()
 	m_background.display();
 
 
-
-
 	const sf::Texture& texture = m_background.getTexture();
 	sf::Sprite sprite(texture);
-	//sprite.setPosition(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y);
+	sprite.setPosition(m_player->getComponent<CTransform>()->pos.x - m_game.window().getSize().x/2, m_game.window().getSize().y/2 - m_player->getComponent<CTransform>()->pos.y);
+
+
+
+	//m_game.window().draw(sf::Sprite(m_background.getTexture()), sf::BlendMultiply);
+
+
 
 	m_game.window().draw(sprite, sf::BlendMultiply);
-
 
 	// for (auto line : m_Light_Lines)
 	// {
