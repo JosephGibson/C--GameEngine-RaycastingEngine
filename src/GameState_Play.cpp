@@ -596,7 +596,7 @@ void GameState_Play::sLight()
 			lines[0].position.y = pPos.y;
 			lines[1].position.x = pPos.x + dx * m_player->getComponent<CLight>()->dist;
 			lines[1].position.y = pPos.y + dy * m_player->getComponent<CLight>()->dist;
-			intersetions.push_back(Vec2(pPos.x + dx * m_player->getComponent<CLight>()->dist, pPos.y + dy * m_player->getComponent<CLight>()->dist));
+			intersetions.push_back(Vec2(dx * m_player->getComponent<CLight>()->dist, dy * m_player->getComponent<CLight>()->dist));
 			m_Light_Lines.push_back(lines);
 		}
 
@@ -662,25 +662,21 @@ void GameState_Play::sLight()
 						if (Physics::LineIntersect(pPos, vert, int_v1, int_v2))
 						{
 							points[i] = false;
-					//		intersetions.push_back(vert);
 							break;
 						}
 						else if (Physics::LineIntersect(pPos, vert, int_v2, int_v3))
 						{
 							points[i] = false;
-						//	intersetions.push_back(vert);
 							break;
 						}
 						else if (Physics::LineIntersect(pPos, vert, int_v3, int_v4))
 						{
 							points[i] = false;
-						//	intersetions.push_back(vert);
 							break;
 						}
 						else if (Physics::LineIntersect(pPos, vert, int_v4, int_v1))
 						{
 							points[i] = false;
-						//	intersetions.push_back(vert);
 							break;
 						}
 					}
@@ -733,6 +729,7 @@ void GameState_Play::sLight()
 							lines[0].color = sf::Color::Black;
 							lines[1].color = sf::Color::Black;
 						}
+						intersetions.push_back(vert - pPos);
 						m_Light_Lines.push_back(lines);
 					}
 				}
@@ -740,10 +737,13 @@ void GameState_Play::sLight()
 		}
 	}
 
+
+
+	std::sort(intersetions.begin(), intersetions.end());
 	m_lightPoly.setPointCount(intersetions.size());
 	int i = 0;
 	for (Vec2 p : intersetions){
-		m_lightPoly.setPoint(i, sf::Vector2f(p.x, p.y));
+		m_lightPoly.setPoint(i, sf::Vector2f(p.x + pPos.x, p.y + pPos.y));
 		i++;
 	}
 
