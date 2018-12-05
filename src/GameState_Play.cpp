@@ -433,10 +433,12 @@ void GameState_Play::sCollision()
 				if (m_player->getComponent<CTransform>()->prevPos.x < npc->getComponent<CTransform>()->pos.x)
 				{
 					m_player->getComponent<CTransform>()->pos.x -= overLap.x;
+					npc->getComponent<CTransform>()->pos.x += overLap.x;
 				}
 				else
 				{
 					m_player->getComponent<CTransform>()->pos.x += overLap.x;
+					npc->getComponent<CTransform>()->pos.x -= overLap.x;
 				}
 			}
 
@@ -574,7 +576,7 @@ void GameState_Play::sLight()
 	pPos.y = 768 - pPos.y;
 	float dist = m_player->getComponent<CLight>()->dist;
 	;
-	for (int angle = 0; angle < 360; angle += 3)
+	for (int angle = 0; angle < 360; angle += 1)
 	{
 		auto dx = std::cos( (angle * M_PI ) / 180);
 		auto dy = std::sin( (angle * M_PI ) / 180);
