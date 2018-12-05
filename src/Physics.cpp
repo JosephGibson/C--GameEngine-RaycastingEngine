@@ -39,6 +39,30 @@ bool Physics::EntityIntersect(const Vec2 & a, const Vec2 & b, std::shared_ptr<En
 {
 
 	Vec2 p = e->getComponent<CTransform>()->pos;
+	Vec2 bb = e->getComponent<CBoundingBox>()->halfSize;
+
+
+	if (Physics::LineIntersect(a, b, Vec2(p.x - bb.x, p.y + bb.y), Vec2(p.x + bb.x, p.y + bb.y)))
+	{return true;}
+
+	else if (Physics::LineIntersect(a, b, Vec2(p.x + bb.x, p.y + bb.y), Vec2(p.x + bb.x, p.y - bb.y)))
+	{return true;}
+
+	else if (Physics::LineIntersect(a, b, Vec2(p.x + bb.x, p.y - bb.y), Vec2(p.x - bb.x, p.y - bb.y)))
+	{return true;}
+
+	else if (Physics::LineIntersect(a, b, Vec2(p.x - bb.x, p.y - bb.y), Vec2(p.x - bb.x, p.y + bb.y)))
+	{return true;}
+
+	else
+	{return false;}
+
+}
+
+bool Physics::LightEntityIntersect(const Vec2 & a, const Vec2 & b, std::shared_ptr<Entity> e)
+{
+
+	Vec2 p = e->getComponent<CTransform>()->pos;
 	p.y = 768 - p.y;
 	Vec2 bb = e->getComponent<CBoundingBox>()->halfSize;
 

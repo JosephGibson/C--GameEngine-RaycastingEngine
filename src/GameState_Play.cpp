@@ -583,7 +583,7 @@ void GameState_Play::sLight()
 		bool no_intersect = true;
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
-			if (Physics::EntityIntersect(pPos, Vec2(pPos.x + dx * 300, pPos.y + dy * 300), tile))
+			if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + dx * 300, pPos.y + dy * 300), tile))
 			{
 				no_intersect = false;
 				break;
