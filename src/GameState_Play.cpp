@@ -22,7 +22,6 @@ GameState_Play::GameState_Play(GameEngine & game, const std::string & levelPath)
 
 void GameState_Play::init(const std::string & levelPath)
 {
-	m_lightPoly.setOutlineColor(sf::Color::Red);
 	loadLevel(levelPath);
 }
 
@@ -124,7 +123,7 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, true);;
 	m_player->addComponent<CGravity>(m_playerConfig.Gravity);
 	m_player->addComponent<CState>("stand");
-	m_player->addComponent<CLight>(300);
+	m_player->addComponent<CLight>(350);
 }
 
 
@@ -572,9 +571,10 @@ void GameState_Play::sLight()
 
 	/*Cast a ray every 5 degree from player, remove if intersect. */
 	Vec2 pPos = m_player->getComponent<CTransform>()->pos;
-	float dist = m_player->getComponent<CLight>()->dist;
 	pPos.y = 768 - pPos.y;
-	for (int angle = 0; angle < 360; angle += 15)
+	float dist = m_player->getComponent<CLight>()->dist;
+	;
+	for (int angle = 0; angle < 360; angle += 3)
 	{
 		auto dx = std::cos( (angle * M_PI ) / 180);
 		auto dy = std::sin( (angle * M_PI ) / 180);
@@ -596,7 +596,8 @@ void GameState_Play::sLight()
 			lines[0].position.y = pPos.y;
 			lines[1].position.x = pPos.x + dx * m_player->getComponent<CLight>()->dist;
 			lines[1].position.y = pPos.y + dy * m_player->getComponent<CLight>()->dist;
-			intersetions.push_back(Vec2(dx * m_player->getComponent<CLight>()->dist, dy * m_player->getComponent<CLight>()->dist));
+			Vec2 k = Vec2(dx * m_player->getComponent<CLight>()->dist, dy * m_player->getComponent<CLight>()->dist);
+			intersetions.push_back(k);
 			m_Light_Lines.push_back(lines);
 		}
 
@@ -647,40 +648,40 @@ void GameState_Play::sLight()
 					vert = end_v4;
 					break;
 				}
-					for (auto & intersect_tile : m_entityManager.getEntities("Tile"))
+				for (auto & intersect_tile : m_entityManager.getEntities("Tile"))
+				{
+					Vec2 intersect_origin = intersect_tile->getComponent<CTransform>()->pos;
+					intersect_origin.y = 768 - intersect_origin.y;
+					Vec2 intersect_bb = intersect_tile->getComponent<CBoundingBox>()->halfSize;
+
+					Vec2 int_v1 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y - intersect_bb.y);
+					Vec2 int_v2 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y - intersect_bb.y);
+					Vec2 int_v3 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y + intersect_bb.y);
+					Vec2 int_v4 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y + intersect_bb.y);
+
+
+					if (Physics::LineIntersect(pPos, vert, int_v1, int_v2))
 					{
-						Vec2 intersect_origin = intersect_tile->getComponent<CTransform>()->pos;
-						intersect_origin.y = 768 - intersect_origin.y;
-						Vec2 intersect_bb = intersect_tile->getComponent<CBoundingBox>()->halfSize;
-
-						Vec2 int_v1 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y - intersect_bb.y);
-						Vec2 int_v2 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y - intersect_bb.y);
-						Vec2 int_v3 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y + intersect_bb.y);
-						Vec2 int_v4 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y + intersect_bb.y);
-
-
-						if (Physics::LineIntersect(pPos, vert, int_v1, int_v2))
-						{
-							points[i] = false;
-							break;
-						}
-						else if (Physics::LineIntersect(pPos, vert, int_v2, int_v3))
-						{
-							points[i] = false;
-							break;
-						}
-						else if (Physics::LineIntersect(pPos, vert, int_v3, int_v4))
-						{
-							points[i] = false;
-							break;
-						}
-						else if (Physics::LineIntersect(pPos, vert, int_v4, int_v1))
-						{
-							points[i] = false;
-							break;
-						}
+						points[i] = false;
+						break;
 					}
-				
+					else if (Physics::LineIntersect(pPos, vert, int_v2, int_v3))
+					{
+						points[i] = false;
+						break;
+					}
+					else if (Physics::LineIntersect(pPos, vert, int_v3, int_v4))
+					{
+						points[i] = false;
+						break;
+					}
+					else if (Physics::LineIntersect(pPos, vert, int_v4, int_v1))
+					{
+						points[i] = false;
+						break;
+					}
+				}
+
 			}
 			for (int j = 0; j < 4; j++)
 			{
@@ -729,7 +730,8 @@ void GameState_Play::sLight()
 							lines[0].color = sf::Color::Black;
 							lines[1].color = sf::Color::Black;
 						}
-						intersetions.push_back(vert - pPos);
+						Vec2 p = vert - pPos;
+						intersetions.push_back(p);
 						m_Light_Lines.push_back(lines);
 					}
 				}
@@ -740,12 +742,28 @@ void GameState_Play::sLight()
 
 
 	std::sort(intersetions.begin(), intersetions.end());
-	m_lightPoly.setPointCount(intersetions.size());
-	int i = 0;
-	for (Vec2 p : intersetions){
-		m_lightPoly.setPoint(i, sf::Vector2f(p.x + pPos.x, p.y + pPos.y));
-		i++;
+
+	sf::Color color(100,100,100, 50);
+
+	m_lightPoly.clear();
+	for (int i = 0; i < intersetions.size() -1; i+=1)
+	{
+		sf::ConvexShape triangle;
+		triangle.setPointCount(3);
+		triangle.setPoint(0, sf::Vector2f(pPos.x, pPos.y));	
+		triangle.setPoint(1, sf::Vector2f(intersetions[i].x + pPos.x, intersetions[i].y + pPos.y));
+		triangle.setPoint(2, sf::Vector2f(intersetions[i+1].x + pPos.x, intersetions[i+1].y + pPos.y));
+		triangle.setFillColor(color);
+		m_lightPoly.push_back(triangle);
 	}
+
+		sf::ConvexShape triangle;
+		triangle.setPointCount(3);
+		triangle.setPoint(0, sf::Vector2f(pPos.x, pPos.y));	
+		triangle.setPoint(1, sf::Vector2f(intersetions.front().x + pPos.x, intersetions.front().y + pPos.y));
+		triangle.setPoint(2, sf::Vector2f(intersetions.back().x + pPos.x, intersetions.back().y + pPos.y));
+		triangle.setFillColor(color);
+		m_lightPoly.push_back(triangle);
 
 }
 
@@ -778,7 +796,7 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::S:       { pInput->down = true; break; }
 			case sf::Keyboard::D:       { pInput->right = true; break; }
 			case sf::Keyboard::Z:       { init(m_levelPath); break; }
-			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
+ 			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
 			default : {break;}
 			}
@@ -882,14 +900,14 @@ void GameState_Play::sRender()
 
 	}
 
-	for (auto line : m_Light_Lines)
+	// for (auto line : m_Light_Lines)
+	// {
+	// 	m_game.window().draw(line);
+	// }
+
+	for (auto p : m_lightPoly)
 	{
-		m_game.window().draw(line);
+		m_game.window().draw(p);
 	}
-
-	sf::Color color(100, 100, 100, 25);
-	m_lightPoly.setFillColor(color);
-	m_game.window().draw(m_lightPoly);
-
 	m_game.window().display();
 }
