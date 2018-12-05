@@ -22,6 +22,8 @@ GameState_Play::GameState_Play(GameEngine & game, const std::string & levelPath)
 
 void GameState_Play::init(const std::string & levelPath)
 {
+
+	m_background.create(1346, 770);
 	loadLevel(levelPath);
 }
 
@@ -123,7 +125,7 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, true);;
 	m_player->addComponent<CGravity>(m_playerConfig.Gravity);
 	m_player->addComponent<CState>("stand");
-	m_player->addComponent<CLight>(350);
+	m_player->addComponent<CLight>(250);
 }
 
 
@@ -745,7 +747,7 @@ void GameState_Play::sLight()
 
 	std::sort(intersetions.begin(), intersetions.end());
 
-	sf::Color color(100,100,100, 50);
+	sf::Color color(255,255,255, 255);
 
 	m_lightPoly.clear();
 	for (int i = 0; i < intersetions.size() -1; i+=1)
@@ -824,12 +826,13 @@ void GameState_Play::sUserInput()
 void GameState_Play::sRender()
 {
 	m_game.window().clear(sf::Color(255, 192, 122));
-
+	m_background.clear(sf::Color(15, 15, 15));
 	sf::View view(m_game.window().getDefaultView());
 
 
 	/* Set camera to follow player */
 	view.setCenter(m_player->getComponent<CTransform>()->pos.x, m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y);
+
 	m_game.window().setView(view);
 
 	/* draw all Entity textures / animations */
@@ -902,14 +905,29 @@ void GameState_Play::sRender()
 
 	}
 
+
+
+	for (auto p : m_lightPoly)
+	{
+		m_background.draw(p);
+	}
+
+	m_background.display();
+
+
+
+
+	const sf::Texture& texture = m_background.getTexture();
+	sf::Sprite sprite(texture);
+	//sprite.setPosition(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y);
+
+	m_game.window().draw(sprite, sf::BlendMultiply);
+
+
 	// for (auto line : m_Light_Lines)
 	// {
 	// 	m_game.window().draw(line);
 	// }
-
-	for (auto p : m_lightPoly)
-	{
-		m_game.window().draw(p);
-	}
+	
 	m_game.window().display();
 }
