@@ -46,6 +46,7 @@ protected:
 	void sCollision();
 	void sRender();
 	void sLight();
+	void sHealth();
 
 public:
 

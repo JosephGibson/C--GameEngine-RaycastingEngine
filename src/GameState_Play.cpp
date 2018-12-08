@@ -33,6 +33,8 @@ void GameState_Play::init(const std::string & levelPath)
  * @brief      Loads a level.
  *
  * @param[in]  filename  The filename
+ *
+ * !ToDo : add in asset loading for items
  */
 
 void GameState_Play::loadLevel(const std::string & filename)
@@ -84,6 +86,8 @@ void GameState_Play::loadLevel(const std::string & filename)
 			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize() * 0.9, BM, BV);
 			e->addComponent<CState>("STATE_NAME_HERE");
 			e->addComponent<CGravity>(grav);
+			e->addComponent<CHealth>(100);
+			e->addComponent<CDamage>(10);  /// health and damage values could be added as in config text , default values are used for now
 
 			if ( aiName == "Follow")
 			{
@@ -127,6 +131,8 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CGravity>(m_playerConfig.Gravity);
 	m_player->addComponent<CState>("stand");
 	m_player->addComponent<CLight>(275);
+	m_player->addComponent<CHealth>(200);
+	m_player->addComponent<CInventory>();
 }
 
 
@@ -143,6 +149,7 @@ void GameState_Play::update()
 		sMovement();
 		sLifespan();
 		sCollision();
+		sHealth();
 		sAnimation();
 		sLight();
 		sUserInput();
@@ -357,10 +364,34 @@ void GameState_Play::sLifespan()
 
 }
 
+/*
+* @ brief { Handles Npc and player death when health reaches 0}
+*/
+void GameState_Play::sHealth()
+{
+	if (m_player->getComponent<CHealth>()->hp <= 0)
+	{
+		m_player->destroy();
+		spawnPlayer(); 
+	}
+
+	for (auto & npc : m_entityManager.getEntities("NPC"))
+	{
+		if (npc->hasComponent<CHealth>())
+		{
+			if (npc->getComponent<CHealth>()->hp <= 0)
+			{
+				npc->destroy();
+			}
+		}
+	}
+}
+
 
 /**
  * @brief      { The collision system. }
  */
+
 
 void GameState_Play::sCollision()
 {
@@ -424,6 +455,8 @@ void GameState_Play::sCollision()
 
 		/** Check foor NPC player cols**/
 
+		
+
 		Vec2 overLap = Physics::GetOverlap(m_player, npc);
 
 		if (overLap.x >= 0 && overLap.y >= 0)
@@ -463,6 +496,8 @@ void GameState_Play::sCollision()
 					player_grounded = true;
 				}
 			}
+
+			m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg; 
 
 		}
 	}
@@ -827,6 +862,8 @@ void GameState_Play::sUserInput()
 
 /**
  * [GameState_Play::sRender description]
+ *
+ * !TODO: need to add a health display as well as medkit and ammo count
  */
 void GameState_Play::sRender()
 {

@@ -116,3 +116,34 @@ public:
     float speed = 0;
     CPatrol(std::vector<Vec2> & pos, float s) : positions(pos), speed(s) {}
 };
+
+class CHealth : public Component
+{
+public:
+	int hp;
+	CHealth(int health) : hp(health) {}
+};
+
+class CDamage : public Component 
+{
+public:
+	int dmg;
+	CDamage(int damage) : dmg(damage) {}
+};
+
+class CInventory : public Component
+{
+public:
+	int numOfHealthKits;
+	int ammo;
+	bool fistSelected = true; // if false, gun is the selected weapon;
+	CInventory() {}
+};
+
+class CItem : public Component
+{
+public:
+	int amount; // this will dictate how much ammo/medkits you get from pickup;
+	bool isAmmo; // this will have to be changed should there be more then just ammo and health kits *** is true if it is ammo
+	CItem(int numOf, bool type) : amount(numOf), isAmmo(type) {}
+};
