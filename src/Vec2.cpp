@@ -83,7 +83,7 @@ float Vec2::dist(const Vec2 & rhs) const
 {
 	return sqrtf((x - rhs.x) * (x - rhs.x) + (y - rhs.y) * (y - rhs.y));
 }
-
+ 
 Vec2 Vec2::norm() const
 {
 	float len = this->length();
@@ -106,7 +106,6 @@ Vec2 Vec2::abs() const
 
 float Vec2::clockwise_angle(const Vec2 & vec) const
 {
-   
     float angle = 0.0;
     angle = atan2(vec.x, vec.y);
     return angle;

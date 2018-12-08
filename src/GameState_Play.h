@@ -20,13 +20,12 @@ protected:
 	std::shared_ptr<Entity> 		m_player;
 	std::string						m_levelPath;
 	PlayerConfig					m_playerConfig;
-	bool							m_drawCollision = true;
+	bool							m_drawCollision = false;
 	std::vector<int>				m_RoomsX = { -1, 0, 1};
 	std::vector<int>				m_RoomsY = { -1, 0, 1};
 	std::vector<sf::VertexArray>	m_Light_Lines;
-	std::vector<sf::ConvexShape>	m_lightPoly;
 	sf::RenderTexture				m_background;
-
+	sf::VertexArray					m_lightPoly;
 
 	/** Helper Methods **/
 	void init(const std::string & levelPath);

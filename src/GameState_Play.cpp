@@ -22,7 +22,7 @@ GameState_Play::GameState_Play(GameEngine & game, const std::string & levelPath)
 
 void GameState_Play::init(const std::string & levelPath)
 {
-
+	m_lightPoly = sf::VertexArray(sf::TrianglesFan);
 	m_background.create(1344, 768);
 	m_background.setSmooth(true);
 	loadLevel(levelPath);
@@ -126,7 +126,7 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, true);;
 	m_player->addComponent<CGravity>(m_playerConfig.Gravity);
 	m_player->addComponent<CState>("stand");
-	m_player->addComponent<CLight>(250);
+	m_player->addComponent<CLight>(275);
 }
 
 
@@ -579,7 +579,7 @@ void GameState_Play::sLight()
 	pPos.y = 768 - pPos.y;
 	float dist = m_player->getComponent<CLight>()->dist;
 	;
-	for (int angle = 0; angle < 360; angle += 1)
+	for (int angle = 0; angle < 360; angle += 3)
 	{
 		auto dx = std::cos( (angle * M_PI ) / 180);
 		auto dy = std::sin( (angle * M_PI ) / 180);
@@ -664,7 +664,6 @@ void GameState_Play::sLight()
 					Vec2 int_v3 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y + intersect_bb.y);
 					Vec2 int_v4 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y + intersect_bb.y);
 
-
 					if (Physics::LineIntersect(pPos, vert, int_v1, int_v2))
 					{
 						points[i] = false;
@@ -748,27 +747,23 @@ void GameState_Play::sLight()
 
 	std::sort(intersetions.begin(), intersetions.end());
 
-	sf::Color color(255,255,255, 255);
+	sf::VertexArray TriangleFan(sf::TriangleFan, intersetions.size() + 1);
 
-	m_lightPoly.clear();
-	for (int i = 0; i < intersetions.size() -1; i+=1)
+	TriangleFan[0].position = sf::Vector2f(pPos.x, pPos.y);
+	TriangleFan[0].color = sf::Color(255, 255, 240, 200);
+
+	for (int i = 1; i < intersetions.size(); i += 1)
 	{
-		sf::ConvexShape triangle;
-		triangle.setPointCount(3);
-		triangle.setPoint(0, sf::Vector2f(pPos.x, pPos.y));	
-		triangle.setPoint(1, sf::Vector2f(intersetions[i].x + pPos.x, intersetions[i].y + pPos.y));
-		triangle.setPoint(2, sf::Vector2f(intersetions[i+1].x + pPos.x, intersetions[i+1].y + pPos.y));
-		triangle.setFillColor(color);
-		m_lightPoly.push_back(triangle);
+		TriangleFan[i].position = sf::Vector2f(intersetions[i].x + pPos.x, intersetions[i].y + pPos.y);
+		TriangleFan[i].color = sf::Color(220, 220, 100, 100);
 	}
 
-		sf::ConvexShape triangle;
-		triangle.setPointCount(3);
-		triangle.setPoint(0, sf::Vector2f(pPos.x, pPos.y));	
-		triangle.setPoint(1, sf::Vector2f(intersetions.front().x + pPos.x, intersetions.front().y + pPos.y));
-		triangle.setPoint(2, sf::Vector2f(intersetions.back().x + pPos.x, intersetions.back().y + pPos.y));
-		triangle.setFillColor(color);
-		m_lightPoly.push_back(triangle);
+	TriangleFan[intersetions.size()].position = sf::Vector2f(intersetions[1].x + pPos.x, intersetions[1].y + pPos.y);
+	TriangleFan[intersetions.size()].color = sf::Color(220, 220, 100, 100);
+
+	m_lightPoly = TriangleFan;
+
+
 
 }
 
@@ -801,7 +796,7 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::S:       { pInput->down = true; break; }
 			case sf::Keyboard::D:       { pInput->right = true; break; }
 			case sf::Keyboard::Z:       { init(m_levelPath); break; }
- 			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
+			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
 			default : {break;}
 			}
@@ -826,10 +821,9 @@ void GameState_Play::sUserInput()
  */
 void GameState_Play::sRender()
 {
-	m_game.window().clear(sf::Color(255, 192, 122));
-	m_background.clear(sf::Color(15, 15, 15));
+	m_game.window().clear(sf::Color(200, 175, 155));
+	m_background.clear(sf::Color(10, 10, 10));
 	sf::View view(m_game.window().getDefaultView());
-	m_background.setSmooth(true);
 
 	/* Set camera to follow player */
 	view.setCenter(m_player->getComponent<CTransform>()->pos.x, m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y);
@@ -857,6 +851,11 @@ void GameState_Play::sRender()
 	// draw all Entity collision bounding boxes with a rectangleshape
 	if (m_drawCollision)
 	{
+		for (auto l : m_Light_Lines)
+		{
+			m_game.window().draw(l);
+		}
+
 		sf::CircleShape dot(4);
 		dot.setFillColor(sf::Color::Black);
 		for (auto e : m_entityManager.getEntities())
@@ -908,32 +907,20 @@ void GameState_Play::sRender()
 	}
 
 	m_background.setView(view);
+	m_background.draw(m_lightPoly);
 
 
-	for (auto p : m_lightPoly)
-	{
-		m_background.draw(p);
-	}
 
 	m_background.display();
 
-
 	const sf::Texture& texture = m_background.getTexture();
 	sf::Sprite sprite(texture);
-	sprite.setPosition(m_player->getComponent<CTransform>()->pos.x - m_game.window().getSize().x/2, m_game.window().getSize().y/2 - m_player->getComponent<CTransform>()->pos.y);
-
-
-
-	//m_game.window().draw(sf::Sprite(m_background.getTexture()), sf::BlendMultiply);
-
+	sprite.setPosition(m_player->getComponent<CTransform>()->pos.x - m_game.window().getSize().x / 2, m_game.window().getSize().y / 2 - m_player->getComponent<CTransform>()->pos.y);
 
 
 	m_game.window().draw(sprite, sf::BlendMultiply);
 
-	// for (auto line : m_Light_Lines)
-	// {
-	// 	m_game.window().draw(line);
-	// }
-	
+
+
 	m_game.window().display();
 }
