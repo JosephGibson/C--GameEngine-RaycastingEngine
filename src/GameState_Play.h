@@ -6,6 +6,9 @@
 
 #include "EntityManager.h"
 
+#define _USE_MATH_DEFINES // fixs visual studio issues on windows
+#include <cmath>
+
 struct PlayerConfig
 {
 	float X, Y, CX, CY, SPEED, Gravity, JumpSpeed;
