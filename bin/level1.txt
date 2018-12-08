@@ -26,6 +26,7 @@ Tile rust_4 23 0 1 1
 Tile rust_2 24 0 1 1
 Tile rust_4 25 0 1 1
 Tile rust_2 20 6 1 1
+Tile rust_2 19 6 1 1
 Tile rust_2 22 4 1 1
 Tile rust_2 22 3 1 1
 Tile rust_2 22 2 1 1

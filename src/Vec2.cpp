@@ -53,7 +53,7 @@ void Vec2::operator += (const Vec2 & rhs)
 
 bool Vec2::operator < (const Vec2 & v2)
 {
-	return clockwise_angle(Vec2(x,y)) < clockwise_angle(v2);
+	return clockwise_angle(Vec2(x,y).norm()) < clockwise_angle(v2.norm());
 }
 
 void Vec2::operator -= (const Vec2 & rhs)
