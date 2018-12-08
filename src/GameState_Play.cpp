@@ -135,6 +135,33 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CInventory>();
 }
 
+/**
+*
+* @brief		{function to consumes health kit and heal hp}
+*
+*/
+
+void GameState_Play::useHealthKit() 
+{
+	if (m_player->getComponent<CInventory>()->numOfHealthKits > 0)
+	{
+		m_player->getComponent<CInventory>()->numOfHealthKits -= 1;
+
+		if (m_player->getComponent<CHealth>()->hp < 200)
+		{
+			m_player->getComponent<CHealth>()->hp += 25;
+
+			if (m_player->getComponent<CHealth>()->hp > 200) // currently default max health is 200, should be changed to correspond to a set max health value in player config
+			{
+				m_player->getComponent<CHealth>()->hp = 200;
+			}
+		}
+		
+	}
+}
+
+
+
 
 /**
  * @brief      { The main loop of the engine }
@@ -842,6 +869,9 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::Z:       { init(m_levelPath); break; }
 			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
+			case sf::Keyboard::E:		{  useHealthKit(); break; }
+			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->fistSelected = !m_player->getComponent<CInventory>()->fistSelected; break; }
+			case sf::Keyboard::Space:	{/* shoot gun  and reduce ammo count */ break; }
 			default : {break;}
 			}
 		}

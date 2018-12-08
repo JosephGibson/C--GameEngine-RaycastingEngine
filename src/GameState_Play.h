@@ -35,6 +35,7 @@ protected:
 	void loadLevel(const std::string & filename);
 	void update();
 	void spawnPlayer();
+	void useHealthKit();
 
 
 	/** Systems **/
@@ -47,6 +48,8 @@ protected:
 	void sRender();
 	void sLight();
 	void sHealth();
+
+
 
 public:
 
