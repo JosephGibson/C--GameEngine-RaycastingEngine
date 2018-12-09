@@ -30,6 +30,8 @@ protected:
 	sf::RenderTexture				m_background;
 	sf::VertexArray					m_lightPoly;
 
+	sf::Text						m_ammoCount, m_hpKitCount, m_weaponSelected , m_currentHP;
+
 	/** Helper Methods **/
 	void init(const std::string & levelPath);
 	void loadLevel(const std::string & filename);

@@ -134,9 +134,9 @@ public:
 class CInventory : public Component
 {
 public:
-	int numOfHealthKits;
-	int ammo;
-	bool fistSelected = true; // if false, gun is the selected weapon;
+	int numOfHealthKits = 0;
+	int ammo = 0;
+	bool meleeSelected = true; // if false, gun is the selected weapon;
 	CInventory() {}
 };
 

@@ -138,6 +138,23 @@ void GameState_Play::loadLevel(const std::string & filename)
 		}
 	}
 	spawnPlayer();
+	
+	m_ammoCount.setFont(m_game.getAssets().getFont("titleFont"));
+	m_ammoCount.setCharacterSize(32);
+	m_ammoCount.setFillColor(sf::Color::White);
+
+	m_hpKitCount.setFont(m_game.getAssets().getFont("titleFont"));
+	m_hpKitCount.setCharacterSize(32);
+	m_hpKitCount.setFillColor(sf::Color::White);
+
+	m_weaponSelected.setFont(m_game.getAssets().getFont("titleFont"));
+	m_weaponSelected.setCharacterSize(32);
+	m_weaponSelected.setFillColor(sf::Color::White);
+
+	m_currentHP.setFont(m_game.getAssets().getFont("titleFont"));
+	m_currentHP.setCharacterSize(32);
+	m_currentHP.setFillColor(sf::Color::White);
+
 }
 
 
@@ -959,10 +976,16 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::Z:       { init(m_levelPath); break; }
 			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
+<<<<<<< HEAD
+			case sf::Keyboard::E:		{  useHealthKit(); break; }
+			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->meleeSelected = !m_player->getComponent<CInventory>()->meleeSelected; break; }
+			case sf::Keyboard::Space:	{ if (!m_player->getComponent<CInventory>()->meleeSelected) { spawnBullet(m_player); } break; }
+=======
 			case sf::Keyboard::E:		{ useHealthKit(); break; }
 			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->fistSelected = !m_player->getComponent<CInventory>()->fistSelected; break; }
 			case sf::Keyboard::Space:	{ if (!m_player->getComponent<CInventory>()->fistSelected) { spawnBullet(m_player); } break; }
 			case sf::Keyboard::X:	    {spawnBullet(m_player); break;}
+>>>>>>> 2737367ce671dbe82fa0dd5b50bdef23033ccb9d
 			default : {break;}
 			}
 		}
@@ -991,12 +1014,39 @@ void GameState_Play::sRender()
 	m_game.window().clear(sf::Color(185, 175, 175));
 	m_background.clear(sf::Color(10, 10, 10, 230));
 	sf::View view(m_game.window().getDefaultView());
-
+	
+	/* use center of view to position hp and item counts/selection */
+	auto camPos = m_player->getComponent<CTransform>()->pos;
+	auto window = m_game.window().getDefaultView().getSize();
+	
 	/* Set camera to follow player */
 	view.setCenter(m_player->getComponent<CTransform>()->pos.x, m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y);
 
 	m_game.window().setView(view);
 	//m_background.setView(view);
+
+	std::string conString = "HP: " + std::to_string(m_player->getComponent<CHealth>()->hp);//"Current HP: " + m_player->getComponent<CHealth>()->hp;
+	m_currentHP.setPosition(camPos.x - (window.x/2.1) , (window.y/2) - camPos.y );
+	m_currentHP.setString(conString);
+
+	m_ammoCount.setPosition(camPos.x - (window.x / 2.4), (window.y / 2) - camPos.y);
+	conString = "Ammo: " + std::to_string(m_player->getComponent<CInventory>()->ammo);
+	m_ammoCount.setString(conString);
+
+	m_hpKitCount.setPosition(camPos.x - (window.x / 2.9), (window.y / 2) - camPos.y);
+	conString = "Med kits: " + std::to_string(m_player->getComponent<CInventory>()->numOfHealthKits);
+	m_hpKitCount.setString(conString);
+
+	m_weaponSelected.setPosition(camPos.x - (window.x / 4), (window.y / 2) - camPos.y);
+	if (m_player->getComponent<CInventory>()->meleeSelected)
+	{
+		conString = "Weapon Selected: Pipe" ;
+	}
+	else
+	{
+		conString = "Weapon Selected: Gun";
+	}
+	m_weaponSelected.setString(conString);
 
 	/* draw all Entity textures / animations */
 
@@ -1087,7 +1137,10 @@ void GameState_Play::sRender()
 
 	m_game.window().draw(sprite, sf::BlendMultiply);
 
-
+	m_game.window().draw(m_currentHP);
+	m_game.window().draw(m_ammoCount);
+	m_game.window().draw(m_hpKitCount);
+	m_game.window().draw(m_weaponSelected);
 
 	m_game.window().display();
 }
