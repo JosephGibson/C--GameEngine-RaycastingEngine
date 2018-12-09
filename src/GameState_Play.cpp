@@ -73,6 +73,30 @@ void GameState_Play::loadLevel(const std::string & filename)
 			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize(), BM, BV);
 		}
 
+		else if (token == "Item") // items should have all the same data as a Tile as well as int for the amount and a bool for the item type (true for ammo, false for medkits)
+		{
+			std::string name , type;
+			float TX, TY;
+			int BM, BV , amount;
+			bool isAmmo;
+
+			file >> name >> TX >> TY >> BM >> BV >> amount >> type;
+			auto e = m_entityManager.addEntity(token);
+			e->addComponent<CTransform>()->pos = Vec2(TX * 64 + 32, TY * 64 + 32);
+			e->addComponent<CAnimation>(m_game.getAssets().getAnimation(name), true);
+			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize(), BM, BV);
+			if (type == "true")
+			{
+				isAmmo = true;
+			}
+			else
+			{
+				isAmmo = false;
+			}
+			e->addComponent<CItem>(amount, isAmmo);
+		}
+
+
 		/*NPC found, load.*/
 		else if (token == "NPC")
 		{
@@ -162,27 +186,29 @@ void GameState_Play::useHealthKit()
 }
 
 
-void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity)
+void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity) // add check for ammo and ammo depletion
 {
-	auto bullet = m_entityManager.addEntity("bullet");
-
-	if (m_player->getComponent<CTransform>()->facing.y == 1)
+	if (m_player->getComponent<CInventory>()->ammo > 0)
 	{
-		bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y));
-		bullet->getComponent<CTransform>()->speed = Vec2(m_playerConfig.SPEED*1.5, 0);
-			//Vec2(m_playerConfig.SPEED*1.5, 0), Vec2(1, 1), 0);
-	}
-	else
-	{
-		bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y));
-		bullet->getComponent<CTransform>()->speed = Vec2(-m_playerConfig.SPEED*1.5, 0);
-			//Vec2(-m_playerConfig.SPEED*1.5, 0), Vec2(1, 1), 0);
-	}
+		auto bullet = m_entityManager.addEntity("bullet");
 
-	bullet->addComponent<CAnimation>(m_game.getAssets().getAnimation("Buster"), true);
-	bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("Buster").getSize().x, m_game.getAssets().getAnimation("Buster").getSize().y), false, false);
-	bullet->addComponent<CLifeSpan>(2000);
-	bullet->addComponent<CDamage>(50);
+		if (m_player->getComponent<CTransform>()->facing.y == 1)
+		{
+			bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y));
+			bullet->getComponent<CTransform>()->speed = Vec2(m_playerConfig.SPEED*1.5, 0);
+		}
+		else
+		{
+			bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y));
+			bullet->getComponent<CTransform>()->speed = Vec2(-m_playerConfig.SPEED*1.5, 0);
+		}
+
+		bullet->addComponent<CAnimation>(m_game.getAssets().getAnimation("Buster"), true);
+		bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("Buster").getSize().x, m_game.getAssets().getAnimation("Buster").getSize().y), false, false);
+		bullet->addComponent<CLifeSpan>(2000);
+		bullet->addComponent<CDamage>(50);
+	}
+	m_player->getComponent<CInventory>()->ammo -= 1;
 }
 
 
@@ -256,6 +282,7 @@ void GameState_Play::sMovement()
 		speed.x = 3.5;
 		m_player->getComponent<CTransform>()->scale.x = 1;
 		state = "run";
+		// facing right = [0,1]
 		m_player->getComponent<CTransform>()->facing.x = 0;
 		m_player->getComponent<CTransform>()->facing.y = 1;
 	}
@@ -264,6 +291,7 @@ void GameState_Play::sMovement()
 		speed.x = -3.5;
 		m_player->getComponent<CTransform>()->scale.x = -1;
 		state = "run";
+		// facing left = [1,0]
 		m_player->getComponent<CTransform>()->facing.x = 1;
 		m_player->getComponent<CTransform>()->facing.y = 0;
 	}
@@ -574,8 +602,26 @@ void GameState_Play::sCollision()
 			m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg; 
 
 		}
+
 	}
 
+	/** check for player/item collision **/
+
+	for (auto & item : m_entityManager.getEntities("Item"))
+	{
+		Vec2 overLap = Physics::GetOverlap(m_player, item);
+		if (overLap.x >= 0 && overLap.y >= 0)
+		{
+			if (item->getComponent<CItem>()->isAmmo)
+			{
+				m_player->getComponent<CInventory>()->ammo += item->getComponent<CItem>()->amount;
+			}
+			else
+			{
+				m_player->getComponent<CInventory>()->numOfHealthKits += item->getComponent<CItem>()->amount;
+			}
+		}
+	}
 
 
 	/* Check every tile for cols with player.*/
@@ -915,7 +961,7 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
 			case sf::Keyboard::E:		{  useHealthKit(); break; }
 			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->fistSelected = !m_player->getComponent<CInventory>()->fistSelected; break; }
-			case sf::Keyboard::Space:	{ spawnBullet(m_player); break; }
+			case sf::Keyboard::Space:	{ if (!m_player->getComponent<CInventory>()->fistSelected) { spawnBullet(m_player); } break; }
 			default : {break;}
 			}
 		}
@@ -937,7 +983,7 @@ void GameState_Play::sUserInput()
 /**
  * [GameState_Play::sRender description]
  *
- * !TODO: need to add a health display as well as medkit and ammo count
+ * !TODO: need to add a health display as well as medkit and ammo count as well as weapon currently selected
  */
 void GameState_Play::sRender()
 {
