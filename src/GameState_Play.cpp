@@ -77,13 +77,14 @@ void GameState_Play::loadLevel(const std::string & filename)
 		else if (token == "NPC")
 		{
 
-			std::string name, aiName;			int BM, BV;
-			float TY, TX, grav, speed;
-			file >> name >> TX >> TY >> BM >> BV >> grav >> aiName;
+			std::string name, aiName;			
+			int BM, BV;
+			float TY, TX, grav, speed, BoundingX, BoundingY;
+			file >> name >> TX >> TY >> BM >> BV >> grav >> BoundingX >> BoundingY >> aiName;
 			auto e = m_entityManager.addEntity(token);
 			e->addComponent<CAnimation>(m_game.getAssets().getAnimation(name), true);
 			e->addComponent<CTransform>()->pos = Vec2((TX * 64) + e->getComponent<CAnimation>()->animation.getSize().x / 2, TY * 64 + e->getComponent<CAnimation>()->animation.getSize().y / 2);
-			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize() * 0.9, BM, BV);
+			e->addComponent<CBoundingBox>(Vec2(e->getComponent<CAnimation>()->animation.getSize().x * BoundingX,  e->getComponent<CAnimation>()->animation.getSize().y * BoundingY), BM, BV);
 			e->addComponent<CState>("STATE_NAME_HERE");
 			e->addComponent<CGravity>(grav);
 			e->addComponent<CHealth>(100);
@@ -130,7 +131,7 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, true);;
 	m_player->addComponent<CGravity>(m_playerConfig.Gravity);
 	m_player->addComponent<CState>("stand");
-	m_player->addComponent<CLight>(275);
+	m_player->addComponent<CLight>(350);
 	m_player->addComponent<CHealth>(200);
 	m_player->addComponent<CInventory>();
 }
@@ -496,12 +497,12 @@ void GameState_Play::sCollision()
 			{
 				if (m_player->getComponent<CTransform>()->prevPos.x < npc->getComponent<CTransform>()->pos.x)
 				{
-					m_player->getComponent<CTransform>()->pos.x -= overLap.x;
+					m_player->getComponent<CTransform>()->pos.x -= overLap.x + 20;
 					npc->getComponent<CTransform>()->pos.x += overLap.x;
 				}
 				else
 				{
-					m_player->getComponent<CTransform>()->pos.x += overLap.x;
+					m_player->getComponent<CTransform>()->pos.x += overLap.x + 20;
 					npc->getComponent<CTransform>()->pos.x -= overLap.x;
 				}
 			}
@@ -575,10 +576,7 @@ void GameState_Play::sCollision()
 						player_grounded = true;
 					}
 				}
-
 			}
-
-			/* Do NPC tile col, this could be wrapped in anoter function since its the same as player col.*/
 		}
 	}
 
@@ -628,6 +626,7 @@ void GameState_Play::sAnimation()
 	}
 
 }
+
 
 /**
  * @brief      { The lighting system }
@@ -815,23 +814,22 @@ void GameState_Play::sLight()
 	sf::VertexArray TriangleFan(sf::TriangleFan, intersetions.size() + 2);
 
 	TriangleFan[0].position = sf::Vector2f(pPos.x, pPos.y);
-	TriangleFan[0].color = sf::Color(255, 255, 220, 245);
+	TriangleFan[0].color = sf::Color(255, 255, 225, 230);
 
 
 	for (int i = 1; i < intersetions.size(); i += 1)
 	{
 		float point_to_player = 1 - pPos.dist(Vec2(intersetions[i].x + pPos.x, intersetions[i].y + pPos.y)) / m_player->getComponent<CLight>()->dist;
 		TriangleFan[i].position = sf::Vector2f(intersetions[i].x + pPos.x, intersetions[i].y + pPos.y);
-		TriangleFan[i].color = sf::Color(255*point_to_player, 255*point_to_player, 220*point_to_player, 235*point_to_player);
+		TriangleFan[i].color = sf::Color(255*point_to_player, 255*point_to_player, 205*point_to_player, 230*point_to_player);
 	}
 
 	float point_to_player = 1 - pPos.dist(Vec2(intersetions[0].x + pPos.x, intersetions[0].y + pPos.y)) / m_player->getComponent<CLight>()->dist;
 	TriangleFan[intersetions.size()].position = sf::Vector2f(intersetions[0].x + pPos.x, intersetions[0].y + pPos.y);
-	TriangleFan[intersetions.size()].color = sf::Color(255*point_to_player, 255*point_to_player, 220*point_to_player, 235*point_to_player);
+	TriangleFan[intersetions.size()].color = sf::Color(255*point_to_player, 255*point_to_player, 195*point_to_player, 255*point_to_player);
 	point_to_player = 1 - pPos.dist(Vec2(intersetions[1].x + pPos.x, intersetions[1].y + pPos.y)) / m_player->getComponent<CLight>()->dist;
 	TriangleFan[intersetions.size()+1].position = sf::Vector2f(intersetions[1].x + pPos.x, intersetions[1].y + pPos.y);
-	TriangleFan[intersetions.size()+1].color = sf::Color(255*point_to_player, 255*point_to_player, 220*point_to_player, 235*point_to_player);
-
+	TriangleFan[intersetions.size()+1].color = sf::Color(255*point_to_player, 255*point_to_player, 195*point_to_player, 255*point_to_player);
 	m_lightPoly = TriangleFan;
 
 
@@ -897,8 +895,8 @@ void GameState_Play::sUserInput()
  */
 void GameState_Play::sRender()
 {
-	m_game.window().clear(sf::Color(200, 175, 155));
-	m_background.clear(sf::Color(10, 10, 10));
+	m_game.window().clear(sf::Color(185, 175, 175));
+	m_background.clear(sf::Color(10, 10, 10, 230));
 	sf::View view(m_game.window().getDefaultView());
 
 	/* Set camera to follow player */
