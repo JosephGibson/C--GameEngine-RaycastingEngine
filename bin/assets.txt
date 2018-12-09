@@ -12,8 +12,21 @@ Texture   tex_player_stand      images/player/player_stand.png
 Texture   tex_player_run     	images/player/player_walk.png
 Texture   tex_player_jump      	images/player/player_jump.png
 Texture   tex_spider_run      	images/npc/spider_run.png
-Texture   TexBuster  		images/player/buster.png
 Texture   tex_boss     		images/npc/boss.png
+Texture   tex_pipe  		images/player/pipe.png
+Texture   tex_bullet  		images/player/bullet.png
+Texture   tex_player_shoot  		images/player/player_shoot.png
+Texture   tex_player_whack  		images/player/player_whack.png
+Texture   tex_eye			images/npc/eye.png
+Texture   tex_health_pack		images/pickup/health_pack.png
+Texture   text_ammo_pack		images/pickup/ammo_pack.png
+Animation pipe         	tex_pipe       	1    0
+Animation bullet         	tex_bullet       	1    0
+Animation eye         	tex_eye       	4    10
+Animation player_whack         	tex_player_whack       	1    0
+Animation health_pack         	tex_health_pack       	1    0
+Animation ammo_pack         	text_ammo_pack       	1    0
+Animation player_shoot         	tex_player_shoot       	1    0
 Animation rust_1         	tex_rust_1       	1    0
 Animation rust_2         	tex_rust_2        	1    0
 Animation rust_3         	tex_rust_3        	1    0
@@ -23,7 +36,6 @@ Animation concrete_2         	tex_concrete_2        	1    0
 Animation concrete_3         	tex_concrete_3        	1    0
 Animation concrete_4         	tex_concrete_4        	1    0
 Animation concrete_5         	tex_concrete_5       	1    0
-Animation Buster     		TexBuster   		1    0 
 Animation player_stand         	tex_player_stand        1    0
 Animation player_run         	tex_player_run        	4    10
 Animation player_jump         	tex_player_jump        	1    0

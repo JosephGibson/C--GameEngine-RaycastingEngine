@@ -203,8 +203,8 @@ void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity) // add check fo
 			bullet->getComponent<CTransform>()->speed = Vec2(-m_playerConfig.SPEED*1.5, 0);
 		}
 
-		bullet->addComponent<CAnimation>(m_game.getAssets().getAnimation("Buster"), true);
-		bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("Buster").getSize().x, m_game.getAssets().getAnimation("Buster").getSize().y), false, false);
+		bullet->addComponent<CAnimation>(m_game.getAssets().getAnimation("bullet"), true);
+		bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("bullet").getSize().x, m_game.getAssets().getAnimation("eye").getSize().y), false, false);
 		bullet->addComponent<CLifeSpan>(2000);
 		bullet->addComponent<CDamage>(50);
 	}
@@ -959,9 +959,10 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::Z:       { init(m_levelPath); break; }
 			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
-			case sf::Keyboard::E:		{  useHealthKit(); break; }
+			case sf::Keyboard::E:		{ useHealthKit(); break; }
 			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->fistSelected = !m_player->getComponent<CInventory>()->fistSelected; break; }
 			case sf::Keyboard::Space:	{ if (!m_player->getComponent<CInventory>()->fistSelected) { spawnBullet(m_player); } break; }
+			case sf::Keyboard::X:	    {spawnBullet(m_player); break;}
 			default : {break;}
 			}
 		}
