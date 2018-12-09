@@ -147,3 +147,4 @@ public:
 	bool isAmmo; // this will have to be changed should there be more then just ammo and health kits *** is true if it is ammo
 	CItem(int numOf, bool type) : amount(numOf), isAmmo(type) {}
 };
+

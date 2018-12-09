@@ -36,6 +36,7 @@ protected:
 	void update();
 	void spawnPlayer();
 	void useHealthKit();
+	void spawnBullet(std::shared_ptr<Entity> entity);
 
 
 	/** Systems **/

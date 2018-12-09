@@ -162,6 +162,29 @@ void GameState_Play::useHealthKit()
 }
 
 
+void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity)
+{
+	auto bullet = m_entityManager.addEntity("bullet");
+
+	if (m_player->getComponent<CTransform>()->facing.y == 1)
+	{
+		bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y));
+		bullet->getComponent<CTransform>()->speed = Vec2(m_playerConfig.SPEED*1.5, 0);
+			//Vec2(m_playerConfig.SPEED*1.5, 0), Vec2(1, 1), 0);
+	}
+	else
+	{
+		bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y));
+		bullet->getComponent<CTransform>()->speed = Vec2(-m_playerConfig.SPEED*1.5, 0);
+			//Vec2(-m_playerConfig.SPEED*1.5, 0), Vec2(1, 1), 0);
+	}
+
+	bullet->addComponent<CAnimation>(m_game.getAssets().getAnimation("Buster"), true);
+	bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("Buster").getSize().x, m_game.getAssets().getAnimation("Buster").getSize().y), false, false);
+	bullet->addComponent<CLifeSpan>(2000);
+	bullet->addComponent<CDamage>(50);
+}
+
 
 
 /**
@@ -199,7 +222,7 @@ void GameState_Play::update()
 
 void GameState_Play::sMovement()
 {
-
+	
 	/* Do NPC speed asignments for current cycle */
 	for (auto &  npc : m_entityManager.getEntities("NPC"))
 	{
@@ -216,6 +239,12 @@ void GameState_Play::sMovement()
 		npc->getComponent<CTransform>()->pos += npc->getComponent<CTransform>()->speed;
 	}
 
+	for (auto & bullet : m_entityManager.getEntities("bullet"))
+	{
+		bullet->getComponent<CTransform>()->prevPos =  bullet->getComponent<CTransform>()->pos;
+		bullet->getComponent<CTransform>()->pos += bullet->getComponent<CTransform>()->speed;
+	}
+
 	/* Save players speed for easy access. */
 	Vec2 speed = m_player->getComponent<CTransform>()->speed;
 	auto pInput = m_player->getComponent<CInput>();
@@ -227,12 +256,16 @@ void GameState_Play::sMovement()
 		speed.x = 3.5;
 		m_player->getComponent<CTransform>()->scale.x = 1;
 		state = "run";
+		m_player->getComponent<CTransform>()->facing.x = 0;
+		m_player->getComponent<CTransform>()->facing.y = 1;
 	}
 	else if (pInput->left)
 	{
 		speed.x = -3.5;
 		m_player->getComponent<CTransform>()->scale.x = -1;
 		state = "run";
+		m_player->getComponent<CTransform>()->facing.x = 1;
+		m_player->getComponent<CTransform>()->facing.y = 0;
 	}
 	else
 	{
@@ -478,6 +511,19 @@ void GameState_Play::sCollision()
 		else
 		{
 			npc->getComponent<CState>()->grounded = false;
+		}
+
+		/** check for NPC bullet cols **/
+
+		for (auto & bullet : m_entityManager.getEntities("bullet"))
+		{
+			Vec2 overLap = Physics::GetOverlap(npc, bullet);
+
+			if (overLap.x >= 0 && overLap.y >= 0)
+			{
+				npc->getComponent<CHealth>()->hp -= bullet->getComponent<CDamage>()->dmg;
+				bullet->destroy();
+			}
 		}
 
 
@@ -869,7 +915,7 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
 			case sf::Keyboard::E:		{  useHealthKit(); break; }
 			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->fistSelected = !m_player->getComponent<CInventory>()->fistSelected; break; }
-			case sf::Keyboard::Space:	{/* shoot gun  and reduce ammo count */ break; }
+			case sf::Keyboard::Space:	{ spawnBullet(m_player); break; }
 			default : {break;}
 			}
 		}
