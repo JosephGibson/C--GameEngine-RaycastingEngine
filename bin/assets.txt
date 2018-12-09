@@ -23,7 +23,7 @@ Animation concrete_2         	tex_concrete_2        	1    0
 Animation concrete_3         	tex_concrete_3        	1    0
 Animation concrete_4         	tex_concrete_4        	1    0
 Animation concrete_5         	tex_concrete_5       	1    0
-Animation Buster     		TexBuster   		1    0 666
+Animation Buster     		TexBuster   		1    0 
 Animation player_stand         	tex_player_stand        1    0
 Animation player_run         	tex_player_run        	4    10
 Animation player_jump         	tex_player_jump        	1    0
