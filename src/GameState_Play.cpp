@@ -224,8 +224,9 @@ void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity) // add check fo
 		bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("bullet").getSize().x, m_game.getAssets().getAnimation("eye").getSize().y), false, false);
 		bullet->addComponent<CLifeSpan>(2000);
 		bullet->addComponent<CDamage>(50);
+
+		m_player->getComponent<CInventory>()->ammo -= 1;
 	}
-	m_player->getComponent<CInventory>()->ammo -= 1;
 }
 
 
@@ -976,16 +977,11 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::Z:       { init(m_levelPath); break; }
 			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
-<<<<<<< HEAD
 			case sf::Keyboard::E:		{  useHealthKit(); break; }
 			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->meleeSelected = !m_player->getComponent<CInventory>()->meleeSelected; break; }
 			case sf::Keyboard::Space:	{ if (!m_player->getComponent<CInventory>()->meleeSelected) { spawnBullet(m_player); } break; }
-=======
-			case sf::Keyboard::E:		{ useHealthKit(); break; }
-			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->fistSelected = !m_player->getComponent<CInventory>()->fistSelected; break; }
-			case sf::Keyboard::Space:	{ if (!m_player->getComponent<CInventory>()->fistSelected) { spawnBullet(m_player); } break; }
 			case sf::Keyboard::X:	    {spawnBullet(m_player); break;}
->>>>>>> 2737367ce671dbe82fa0dd5b50bdef23033ccb9d
+
 			default : {break;}
 			}
 		}
