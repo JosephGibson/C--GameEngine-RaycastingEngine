@@ -101,17 +101,17 @@ void GameState_Play::loadLevel(const std::string & filename)
 		else if (token == "NPC")
 		{
 
-			std::string name, aiName;			
-			int BM, BV;
+			std::string name, aiName;
+			int BM, BV, HP, KnockBack;
 			float TY, TX, grav, speed, BoundingX, BoundingY;
-			file >> name >> TX >> TY >> BM >> BV >> grav >> BoundingX >> BoundingY >> aiName;
+			file >> name >> TX >> TY >> BM >> BV >> grav >> BoundingX >> BoundingY >> HP >> KnockBack >> aiName;
 			auto e = m_entityManager.addEntity(token);
 			e->addComponent<CAnimation>(m_game.getAssets().getAnimation(name), true);
 			e->addComponent<CTransform>()->pos = Vec2((TX * 64) + e->getComponent<CAnimation>()->animation.getSize().x / 2, TY * 64 + e->getComponent<CAnimation>()->animation.getSize().y / 2);
 			e->addComponent<CBoundingBox>(Vec2(e->getComponent<CAnimation>()->animation.getSize().x * BoundingX,  e->getComponent<CAnimation>()->animation.getSize().y * BoundingY), BM, BV);
 			e->addComponent<CState>("STATE_NAME_HERE");
-			e->addComponent<CGravity>(grav);
-			e->addComponent<CHealth>(100);
+			e->addComponent<CGravity>(grav, KnockBack);
+			e->addComponent<CHealth>(HP);
 			e->addComponent<CDamage>(10);  /// health and damage values could be added as in config text , default values are used for now
 
 			if ( aiName == "Follow")
@@ -138,7 +138,7 @@ void GameState_Play::loadLevel(const std::string & filename)
 		}
 	}
 	spawnPlayer();
-	
+
 	m_ammoCount.setFont(m_game.getAssets().getFont("titleFont"));
 	m_ammoCount.setCharacterSize(32);
 	m_ammoCount.setFillColor(sf::Color::White);
@@ -170,12 +170,17 @@ void GameState_Play::spawnPlayer()
 	m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_stand"), true);
 	m_player->addComponent<CInput>();
 	m_player->addComponent<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, true);;
-	m_player->addComponent<CGravity>(m_playerConfig.Gravity);
+	m_player->addComponent<CGravity>(m_playerConfig.Gravity, 0);
 	m_player->addComponent<CState>("stand");
 	m_player->addComponent<CLight>(350);
 	m_player->addComponent<CHealth>(200);
 	m_player->addComponent<CInventory>();
+	m_player->getComponent<CTransform>()->facing.x = 1;
+	m_player->getComponent<CInventory>()->ammo = 99;
+	m_player->getComponent<CInventory>()->numOfHealthKits  = 99;
 }
+
+
 
 /**
 *
@@ -183,7 +188,7 @@ void GameState_Play::spawnPlayer()
 *
 */
 
-void GameState_Play::useHealthKit() 
+void GameState_Play::useHealthKit()
 {
 	if (m_player->getComponent<CInventory>()->numOfHealthKits > 0)
 	{
@@ -198,38 +203,52 @@ void GameState_Play::useHealthKit()
 				m_player->getComponent<CHealth>()->hp = 200;
 			}
 		}
-		
+
 	}
 }
 
 
 void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity) // add check for ammo and ammo depletion
 {
-	if (m_player->getComponent<CInventory>()->ammo > 0)
+	if (m_player->getComponent<CInventory>()->ammo)
 	{
+		m_shoot_timer.restart();
+
 		auto bullet = m_entityManager.addEntity("bullet");
 
-		if (m_player->getComponent<CTransform>()->facing.y == 1)
+		if (m_player->getComponent<CTransform>()->facing.x == 1)
 		{
-			bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y));
-			bullet->getComponent<CTransform>()->speed = Vec2(m_playerConfig.SPEED*1.5, 0);
+			bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x + 15, m_player->getComponent<CTransform>()->pos.y));
+			bullet->getComponent<CTransform>()->speed = Vec2(m_playerConfig.SPEED * 2.5, 0);
 		}
 		else
 		{
-			bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x, m_player->getComponent<CTransform>()->pos.y));
-			bullet->getComponent<CTransform>()->speed = Vec2(-m_playerConfig.SPEED*1.5, 0);
+			bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x - 15, m_player->getComponent<CTransform>()->pos.y));
+			bullet->getComponent<CTransform>()->speed = Vec2(-m_playerConfig.SPEED * 2.5, 0);
 		}
 
 		bullet->addComponent<CAnimation>(m_game.getAssets().getAnimation("bullet"), true);
-		bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("bullet").getSize().x, m_game.getAssets().getAnimation("eye").getSize().y), false, false);
+		bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("bullet").getSize().x, m_game.getAssets().getAnimation("bullet").getSize().y), false, false);
 		bullet->addComponent<CLifeSpan>(2000);
 		bullet->addComponent<CDamage>(50);
-
 		m_player->getComponent<CInventory>()->ammo -= 1;
+
+		m_canShoot = false;
 	}
 }
 
 
+void GameState_Play::spawnMeele(std::shared_ptr<Entity> entity) // add check for ammo and ammo depletion
+{
+	m_shoot_timer.restart();
+	auto meele = m_entityManager.addEntity("meele");
+	meele->addComponent<CTransform>();
+	meele->addComponent<CAnimation>(m_game.getAssets().getAnimation("pipe"), true);
+	meele->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("pipe").getSize().x, m_game.getAssets().getAnimation("pipe").getSize().y), false, false);
+	meele->addComponent<CLifeSpan>(200);
+	meele->addComponent<CDamage>(15);
+	m_canShoot = false;
+}
 
 /**
  * @brief      { The main loop of the engine }
@@ -266,7 +285,7 @@ void GameState_Play::update()
 
 void GameState_Play::sMovement()
 {
-	
+
 	/* Do NPC speed asignments for current cycle */
 	for (auto &  npc : m_entityManager.getEntities("NPC"))
 	{
@@ -283,11 +302,6 @@ void GameState_Play::sMovement()
 		npc->getComponent<CTransform>()->pos += npc->getComponent<CTransform>()->speed;
 	}
 
-	for (auto & bullet : m_entityManager.getEntities("bullet"))
-	{
-		bullet->getComponent<CTransform>()->prevPos =  bullet->getComponent<CTransform>()->pos;
-		bullet->getComponent<CTransform>()->pos += bullet->getComponent<CTransform>()->speed;
-	}
 
 	/* Save players speed for easy access. */
 	Vec2 speed = m_player->getComponent<CTransform>()->speed;
@@ -297,21 +311,17 @@ void GameState_Play::sMovement()
 
 	if (pInput->right)
 	{
-		speed.x = 3.5;
+		speed.x = m_playerConfig.SPEED;
 		m_player->getComponent<CTransform>()->scale.x = 1;
+		m_player->getComponent<CTransform>()->facing.x = 1;
 		state = "run";
-		// facing right = [0,1]
-		m_player->getComponent<CTransform>()->facing.x = 0;
-		m_player->getComponent<CTransform>()->facing.y = 1;
 	}
 	else if (pInput->left)
 	{
-		speed.x = -3.5;
+		speed.x = -m_playerConfig.SPEED;
 		m_player->getComponent<CTransform>()->scale.x = -1;
+		m_player->getComponent<CTransform>()->facing.x = -1;
 		state = "run";
-		// facing left = [1,0]
-		m_player->getComponent<CTransform>()->facing.x = 1;
-		m_player->getComponent<CTransform>()->facing.y = 0;
 	}
 	else
 	{
@@ -339,6 +349,29 @@ void GameState_Play::sMovement()
 	m_player->getComponent<CTransform>()->prevPos = m_player->getComponent<CTransform>()->pos;
 	m_player->getComponent<CTransform>()->pos += m_player->getComponent<CTransform>()->speed;
 	m_player->getComponent<CState>()-> state = state;
+
+
+
+	for (auto & bullet : m_entityManager.getEntities("bullet"))
+	{
+		bullet->getComponent<CTransform>()->prevPos =  bullet->getComponent<CTransform>()->pos;
+		bullet->getComponent<CTransform>()->pos += bullet->getComponent<CTransform>()->speed;
+	}
+
+	for (auto meele : m_entityManager.getEntities("meele"))
+	{
+		if (m_player->getComponent<CTransform>()->facing.x == 1)
+		{
+			meele->getComponent<CTransform>()->pos = Vec2(m_player->getComponent<CTransform>()->pos.x + 42, m_player->getComponent<CTransform>()->pos.y);
+			meele->getComponent<CTransform>()->scale.x = 1;
+		}
+		else
+		{
+			meele->getComponent<CTransform>()->pos = Vec2(m_player->getComponent<CTransform>()->pos.x - 42, m_player->getComponent<CTransform>()->pos.y);
+			meele->getComponent<CTransform>()->scale.x = -1;
+		}
+
+	}
 }
 
 
@@ -460,6 +493,11 @@ void GameState_Play::sAI()
 
 void GameState_Play::sLifespan()
 {
+
+	if (!m_canShoot && m_shoot_timer.getElapsedTime().asMilliseconds() > m_shoot_Max)
+	{
+		m_canShoot = true;
+	}
 	/* Check all life span clocks to see if ElapsedTime >= Life, Del the entity if so.*/
 	for (auto e : m_entityManager.getEntities())
 	{
@@ -479,7 +517,7 @@ void GameState_Play::sHealth()
 	if (m_player->getComponent<CHealth>()->hp <= 0)
 	{
 		m_player->destroy();
-		spawnPlayer(); 
+		spawnPlayer();
 	}
 
 	for (auto & npc : m_entityManager.getEntities("NPC"))
@@ -488,6 +526,7 @@ void GameState_Play::sHealth()
 		{
 			if (npc->getComponent<CHealth>()->hp <= 0)
 			{
+				
 				npc->destroy();
 			}
 		}
@@ -572,10 +611,35 @@ void GameState_Play::sCollision()
 			}
 		}
 
+		for (auto & meele : m_entityManager.getEntities("meele"))
+		{
+			Vec2 overLap = Physics::GetOverlap(npc, meele);
+
+			if (overLap.x >= 0 && overLap.y >= 0)
+			{
+
+
+				Vec2 prevOverLap = Physics::GetPreviousOverlap(npc, meele);
+
+				if (prevOverLap.y > 0)
+				{
+					if (npc->getComponent<CTransform>()->prevPos.x < meele->getComponent<CTransform>()->pos.x)
+					{
+						npc->getComponent<CTransform>()->pos.x -= npc->getComponent<CGravity>()->knockback;
+					}
+					else
+					{
+						npc->getComponent<CTransform>()->pos.x +=  npc->getComponent<CGravity>()->knockback;
+					}
+				}
+				npc->getComponent<CHealth>()->hp -= meele->getComponent<CDamage>()->dmg;
+				meele->destroy();
+			}
+		}
 
 		/** Check foor NPC player cols**/
 
-		
+
 
 		Vec2 overLap = Physics::GetOverlap(m_player, npc);
 
@@ -617,7 +681,7 @@ void GameState_Play::sCollision()
 				}
 			}
 
-			m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg; 
+			m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
 
 		}
 
@@ -687,6 +751,16 @@ void GameState_Play::sCollision()
 					}
 				}
 			}
+			for (auto & bullet : m_entityManager.getEntities("bullet"))
+			{
+				overLap = Physics::GetOverlap(bullet, tile);
+				if (overLap.x >= 0 && overLap.y >= 0)
+				{
+					bullet->destroy();
+				}
+			}
+
+
 		}
 	}
 
@@ -715,17 +789,28 @@ void GameState_Play::sAnimation()
 	/* Retreive the players Animation name.*/
 	std::string animationName = m_player->getComponent<CAnimation>()->animation.getName();
 
-	if (playerState == "stand"  && animationName != "player_stand")
+	if (m_canShoot)
 	{
-		m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_stand"), true);
+		if (playerState == "stand"  && animationName != "player_stand")
+		{
+			m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_stand"), true);
+		}
+		else if (playerState == "jump"  && animationName != "player_jump")
+		{
+			m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_jump"), true);
+		}
+		else if (playerState == "run" && animationName != "player_run")
+		{
+			m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_run"), true);
+		}
 	}
-	else if (playerState == "jump"  && animationName != "player_jump")
+	else if (!m_player->getComponent<CInventory>()->meleeSelected)
 	{
-		m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_jump"), true);
+		m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_shoot"), true);
 	}
-	else if (playerState == "run" && animationName != "player_run")
+	else if (m_player->getComponent<CInventory>()->meleeSelected)
 	{
-		m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_run"), true);
+		m_player->addComponent<CAnimation>(m_game.getAssets().getAnimation("player_whack"), true);
 	}
 
 	/** Update NPC animations **/
@@ -931,15 +1016,15 @@ void GameState_Play::sLight()
 	{
 		float point_to_player = 1 - pPos.dist(Vec2(intersetions[i].x + pPos.x, intersetions[i].y + pPos.y)) / m_player->getComponent<CLight>()->dist;
 		TriangleFan[i].position = sf::Vector2f(intersetions[i].x + pPos.x, intersetions[i].y + pPos.y);
-		TriangleFan[i].color = sf::Color(255*point_to_player, 255*point_to_player, 205*point_to_player, 230*point_to_player);
+		TriangleFan[i].color = sf::Color(255 * point_to_player, 255 * point_to_player, 205 * point_to_player, 230 * point_to_player);
 	}
 
 	float point_to_player = 1 - pPos.dist(Vec2(intersetions[0].x + pPos.x, intersetions[0].y + pPos.y)) / m_player->getComponent<CLight>()->dist;
 	TriangleFan[intersetions.size()].position = sf::Vector2f(intersetions[0].x + pPos.x, intersetions[0].y + pPos.y);
-	TriangleFan[intersetions.size()].color = sf::Color(255*point_to_player, 255*point_to_player, 195*point_to_player, 255*point_to_player);
+	TriangleFan[intersetions.size()].color = sf::Color(255 * point_to_player, 255 * point_to_player, 195 * point_to_player, 255 * point_to_player);
 	point_to_player = 1 - pPos.dist(Vec2(intersetions[1].x + pPos.x, intersetions[1].y + pPos.y)) / m_player->getComponent<CLight>()->dist;
-	TriangleFan[intersetions.size()+1].position = sf::Vector2f(intersetions[1].x + pPos.x, intersetions[1].y + pPos.y);
-	TriangleFan[intersetions.size()+1].color = sf::Color(255*point_to_player, 255*point_to_player, 195*point_to_player, 255*point_to_player);
+	TriangleFan[intersetions.size() + 1].position = sf::Vector2f(intersetions[1].x + pPos.x, intersetions[1].y + pPos.y);
+	TriangleFan[intersetions.size() + 1].color = sf::Color(255 * point_to_player, 255 * point_to_player, 195 * point_to_player, 255 * point_to_player);
 	m_lightPoly = TriangleFan;
 
 
@@ -977,11 +1062,13 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::Z:       { init(m_levelPath); break; }
 			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
-			case sf::Keyboard::E:		{  useHealthKit(); break; }
+			case sf::Keyboard::E:		{ useHealthKit(); break; }
 			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->meleeSelected = !m_player->getComponent<CInventory>()->meleeSelected; break; }
-			case sf::Keyboard::Space:	{ if (!m_player->getComponent<CInventory>()->meleeSelected) { spawnBullet(m_player); } break; }
-			case sf::Keyboard::X:	    {spawnBullet(m_player); break;}
-
+			case sf::Keyboard::Space:
+			{
+				if (!m_player->getComponent<CInventory>()->meleeSelected && m_canShoot) { spawnBullet(m_player); break;}
+				else if (m_player->getComponent<CInventory>()->meleeSelected && m_canShoot) { spawnMeele(m_player); break;}
+			}
 			default : {break;}
 			}
 		}
@@ -1010,11 +1097,11 @@ void GameState_Play::sRender()
 	m_game.window().clear(sf::Color(185, 175, 175));
 	m_background.clear(sf::Color(10, 10, 10, 230));
 	sf::View view(m_game.window().getDefaultView());
-	
+
 	/* use center of view to position hp and item counts/selection */
 	auto camPos = m_player->getComponent<CTransform>()->pos;
 	auto window = m_game.window().getDefaultView().getSize();
-	
+
 	/* Set camera to follow player */
 	view.setCenter(m_player->getComponent<CTransform>()->pos.x, m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y);
 
@@ -1022,7 +1109,7 @@ void GameState_Play::sRender()
 	//m_background.setView(view);
 
 	std::string conString = "HP: " + std::to_string(m_player->getComponent<CHealth>()->hp);//"Current HP: " + m_player->getComponent<CHealth>()->hp;
-	m_currentHP.setPosition(camPos.x - (window.x/2.1) , (window.y/2) - camPos.y );
+	m_currentHP.setPosition(camPos.x - (window.x / 2.1) , (window.y / 2) - camPos.y );
 	m_currentHP.setString(conString);
 
 	m_ammoCount.setPosition(camPos.x - (window.x / 2.4), (window.y / 2) - camPos.y);

@@ -24,6 +24,9 @@ protected:
 	std::string						m_levelPath;
 	PlayerConfig					m_playerConfig;
 	bool							m_drawCollision = false;
+	bool                            m_canShoot = true;
+	sf::Clock 						m_shoot_timer;
+	int                             m_shoot_Max = 200;
 	std::vector<int>				m_RoomsX = { -1, 0, 1};
 	std::vector<int>				m_RoomsY = { -1, 0, 1};
 	std::vector<sf::VertexArray>	m_Light_Lines;
@@ -39,7 +42,7 @@ protected:
 	void spawnPlayer();
 	void useHealthKit();
 	void spawnBullet(std::shared_ptr<Entity> entity);
-
+	void spawnMeele(std::shared_ptr<Entity> entity);
 
 	/** Systems **/
 	void sMovement();

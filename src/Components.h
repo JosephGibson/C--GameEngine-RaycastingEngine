@@ -79,7 +79,8 @@ class CGravity : public Component
 {
 public:
     float gravity;
-    CGravity(float g) : gravity(g) {}
+    int knockback;
+    CGravity(float g, int kb) : gravity(g), knockback(kb) {}
 };
 
 class CState : public Component
