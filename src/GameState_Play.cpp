@@ -77,6 +77,20 @@ void GameState_Play::loadLevel(const std::string & filename)
 			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize(), BM, BV);
 		}
 
+		/*Tile found, load.*/
+		else if (token == "Move_Tile")
+		{
+			std::string name;
+			float TX1, TY1, TX2, TY2, speed;
+			int BM, BV;
+			file >> name >> TX1 >> TY1 >> TX2 >> TY2 >> speed >> BM >> BV;
+			auto e = m_entityManager.addEntity("Tile");
+			e->addComponent<CTransform>()->pos = Vec2(TX1 * 64 + 32, TY1 * 64 + 32);
+			e->addComponent<CAnimation>(m_game.getAssets().getAnimation(name), true);
+			e->addComponent<CBoundingBox>(e->getComponent<CAnimation>()->animation.getSize(), BM, BV);
+			e->addComponent<CMoveTile>(e->getComponent<CTransform>()->pos,  Vec2(TX2 * 64 + 32, TY2 * 64 + 32), speed);
+		}
+
 		else if (token == "Item") // items should have all the same data as a Tile as well as int for the amount and a bool for the item type (true for ammo, false for medkits)
 		{
 			std::string name , type;
@@ -202,6 +216,8 @@ void GameState_Play::useHealthKit()
 {
 	if (m_player->getComponent<CInventory>()->numOfHealthKits > 0)
 	{
+		m_playerSound.setBuffer(m_game.getAssets().getSound("health_pack"));
+		m_playerSound.play();
 		m_player->getComponent<CInventory>()->numOfHealthKits -= 1;
 
 		if (m_player->getComponent<CHealth>()->hp < 200)
@@ -318,7 +334,55 @@ void GameState_Play::sMovement()
 		}
 	}
 
+	for (auto &  tile : m_entityManager.getEntities("Tile"))
+	{
+		if (tile->hasComponent<CMoveTile>())
+		{
+			Vec2 target = Vec2(0, 0);
+			if (tile->getComponent<CMoveTile>()->point == 0)
+			{
+				target = tile->getComponent<CMoveTile>()->pos2;
+			}
+			else
+			{
+				target = tile->getComponent<CMoveTile>()->pos1;
+			}
 
+			if (tile->getComponent<CTransform>()->pos.dist(target) >= 5)
+			{
+				Vec2 Norm = (target - tile->getComponent<CTransform>()->pos).norm();
+				Norm *= tile->getComponent<CMoveTile>()->speed;
+				tile->getComponent<CTransform>()->pos += Norm;
+			}
+			else
+			{
+				if (tile->getComponent<CMoveTile>()->point == 0)
+				{
+					tile->getComponent<CMoveTile>()->point = 1;
+				}
+				else
+				{
+					tile->getComponent<CMoveTile>()->point = 0;
+				}
+			}
+			// {
+			// 	Vec2 Norm = (nextPos - currentPos).norm();
+			// 	Norm *= npc->getComponent<CPatrol>()->speed;
+			// 	if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+			// 	{
+			// 		npc->getComponent<CTransform>()->speed = Norm;
+			// 	}
+			// 	else
+			// 	{
+			// 		npc->getComponent<CTransform>()->speed.x = Norm.x;
+			// 	}
+			// }
+			// else
+			// {
+			// 	npc->getComponent<CPatrol>()->currentPosition = nextPosNum;
+			// }
+		}
+	}
 	/* Save players speed for easy access. */
 	Vec2 speed = m_player->getComponent<CTransform>()->speed;
 	auto pInput = m_player->getComponent<CInput>();
@@ -426,7 +490,6 @@ void GameState_Play::sAI()
 				if (m_hurtSound.getStatus() != sf::Sound::Status::Playing)
 				{
 					std::string animationName = npc->getComponent<CAnimation>()->animation.getName();
-					std::cout << "here " <<  animationName << std::endl;
 					m_hurtSound.setBuffer(m_game.getAssets().getSound(animationName));
 					m_hurtSound.play();
 
@@ -638,6 +701,7 @@ void GameState_Play::sHealth()
 				death->addComponent<CAnimation>(m_game.getAssets().getAnimation("death"), false);
 				m_deathSound.setBuffer(m_game.getAssets().getSound("death"));
 				m_deathSound.play();
+				m_hurtSound.stop();
 			}
 		}
 	}
@@ -769,7 +833,7 @@ void GameState_Play::sCollision()
 				{
 					npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
 				}
-				
+
 				m_hitSound.setBuffer(m_game.getAssets().getSound("pipe_hit"));
 				m_hitSound.play();
 				auto damge = m_entityManager.addEntity("effect");
@@ -833,9 +897,9 @@ void GameState_Play::sCollision()
 					m_player->getComponent<CTransform>()->pos.y += overLap.y + 25;
 				}
 			}
-		m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
-		m_playerSound.setBuffer(m_game.getAssets().getSound("player_hurt"));
-		m_playerSound.play();
+			m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
+			m_playerSound.setBuffer(m_game.getAssets().getSound("player_hurt"));
+			m_playerSound.play();
 
 		}
 
@@ -874,21 +938,8 @@ void GameState_Play::sCollision()
 				/* The previous overlap to resolve col.*/
 				Vec2 prevOverLap =  Physics::GetPreviousOverlap(m_player, tile);
 
-				/* Check for X collison, resolve first.*/
-				if (prevOverLap.y > 0)
-				{
-					if (m_player->getComponent<CTransform>()->prevPos.x < tile->getComponent<CTransform>()->pos.x)
-					{
-						m_player->getComponent<CTransform>()->pos.x -= overLap.x;
-					}
-					else
-					{
-						m_player->getComponent<CTransform>()->pos.x += overLap.x;
-					}
-				}
-
 				/* Check for Y Collisions */
-				else if (prevOverLap.x > 0)
+				if (prevOverLap.x > 0)
 				{
 					/* Check bottom of the tile for Col: */
 					if (m_player->getComponent<CTransform>()->prevPos.y < tile->getComponent<CTransform>()->pos.y)
@@ -902,6 +953,18 @@ void GameState_Play::sCollision()
 					{
 						m_player->getComponent<CTransform>()->pos.y += overLap.y;
 						player_grounded = true;
+					}
+				}
+				/* Check for X collison, resolve first.*/
+				else if (prevOverLap.y > 0)
+				{
+					if (m_player->getComponent<CTransform>()->prevPos.x < tile->getComponent<CTransform>()->pos.x)
+					{
+						m_player->getComponent<CTransform>()->pos.x -= overLap.x;
+					}
+					else
+					{
+						m_player->getComponent<CTransform>()->pos.x += overLap.x;
 					}
 				}
 			}

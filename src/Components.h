@@ -54,6 +54,19 @@ public:
     CInput() {}
 };
 
+
+
+class CMoveTile : public Component
+{
+public:
+	Vec2 pos1 = Vec2{0,0};
+	Vec2 pos2 = Vec2{0,0};
+	float speed;
+	int point = 0;
+	CMoveTile(const Vec2 & p1, const Vec2 & p2, float s): pos1(p1), pos2(p2), speed(s) {}
+};
+
+
 class CBoundingBox : public Component
 {
 public:

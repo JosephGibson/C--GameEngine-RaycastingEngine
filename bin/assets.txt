@@ -56,6 +56,7 @@ Sound		spider              sounds/spider.wav
 Sound		death              sounds/death.wav
 Sound		gun_hit              sounds/gun_hit.wav
 Sound		pipe_hit              sounds/pipe_hit.wav
+Sound		health_pack              sounds/health_pack.wav
 Sound		eye              sounds/eye.wav
 Sound		player_hurt		sounds/player_hurt.wav
 Font		Arial			fonts/arial.ttf
