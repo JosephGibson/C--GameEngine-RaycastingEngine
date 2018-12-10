@@ -32,7 +32,13 @@ protected:
 	std::vector<sf::VertexArray>	m_Light_Lines;
 	sf::RenderTexture				m_background;
 	sf::VertexArray					m_lightPoly;
-
+	
+	sf::Sound						m_hitSound;
+	sf::Sound						m_hurtSound;
+	sf::Sound						m_deathSound;
+	sf::Sound						m_playerAttackSound;
+	sf::Sound						m_backgroundMusic;
+	sf::Sound						m_playerSound;
 	sf::Text						m_ammoCount, m_hpKitCount, m_weaponSelected , m_currentHP;
 
 	/** Helper Methods **/

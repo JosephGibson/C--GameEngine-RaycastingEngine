@@ -19,7 +19,9 @@ void GameState_Menu::init(const std::string & menuConfig)
 	m_levelPaths.push_back("level1.txt");
 	m_menuStrings.push_back("Level  2");
 	m_levelPaths.push_back("level2.txt");
-
+	m_MenuMusic.setBuffer(m_game.getAssets().getSound("music_menu"));
+	m_MenuMusic.setLoop(true);
+	m_MenuMusic.play();
 }
 
 void GameState_Menu::update()
@@ -62,6 +64,7 @@ void GameState_Menu::sUserInput()
 			}
 			case sf::Keyboard::D:
 			{
+				m_MenuMusic.stop();
 				m_game.pushState(std::make_shared<GameState_Play>(m_game, m_levelPaths[m_selectedMenuIndex]));
 				break;
 			}

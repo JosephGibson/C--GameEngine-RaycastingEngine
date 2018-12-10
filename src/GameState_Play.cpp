@@ -25,6 +25,10 @@ void GameState_Play::init(const std::string & levelPath)
 	m_lightPoly = sf::VertexArray(sf::TrianglesFan);
 	m_background.create(1344, 768);
 	m_background.setSmooth(true);
+	m_backgroundMusic.setBuffer(m_game.getAssets().getSound("music_1"));
+	m_backgroundMusic.setLoop(true);
+	m_backgroundMusic.setVolume(70);
+	m_backgroundMusic.play();
 	loadLevel(levelPath);
 }
 
@@ -218,6 +222,8 @@ void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity) // add check fo
 {
 	if (m_player->getComponent<CInventory>()->ammo)
 	{
+		m_playerAttackSound.setBuffer(m_game.getAssets().getSound("gun_shoot"));
+		m_playerAttackSound.play();
 		m_shoot_timer.restart();
 
 		auto bullet = m_entityManager.addEntity("bullet");
@@ -246,13 +252,15 @@ void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity) // add check fo
 
 void GameState_Play::spawnMeele(std::shared_ptr<Entity> entity) // add check for ammo and ammo depletion
 {
+	m_playerAttackSound.setBuffer(m_game.getAssets().getSound("pipe_swing"));
+	m_playerAttackSound.play();
 	m_shoot_timer.restart();
 	auto meele = m_entityManager.addEntity("meele");
 	meele->addComponent<CTransform>();
 	meele->addComponent<CAnimation>(m_game.getAssets().getAnimation("pipe"), true);
 	meele->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("pipe").getSize().x * 1.35, m_game.getAssets().getAnimation("pipe").getSize().y * 2), false, false);
-	meele->addComponent<CLifeSpan>(200);
-	meele->addComponent<CDamage>(15);
+	meele->addComponent<CLifeSpan>(300);
+	meele->addComponent<CDamage>(25);
 	m_canShoot = false;
 }
 
@@ -345,6 +353,8 @@ void GameState_Play::sMovement()
 	else if (pInput->up)
 	{
 		speed.y = m_playerConfig.JumpSpeed;
+		m_playerSound.setBuffer(m_game.getAssets().getSound("jump"));
+		m_playerSound.play();
 		state = "jump";
 	}
 	else
@@ -413,9 +423,17 @@ void GameState_Play::sAI()
 			/* If vision, chase the player. */
 			if (can_see)
 			{
+				if (m_hurtSound.getStatus() != sf::Sound::Status::Playing)
+				{
+					std::string animationName = npc->getComponent<CAnimation>()->animation.getName();
+					std::cout << "here " <<  animationName << std::endl;
+					m_hurtSound.setBuffer(m_game.getAssets().getSound(animationName));
+					m_hurtSound.play();
+
+				}
+
 				Vec2 Norm = (m_player->getComponent<CTransform>()->pos - npc->getComponent<CTransform>()->pos).norm();
 				Norm *= npc->getComponent<CFollowPlayer>()->speed;
-				std::cout << Norm.x << std::endl;
 				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
 				{
 
@@ -437,6 +455,7 @@ void GameState_Play::sAI()
 			/* Check if the NPCS is close that a movement would push them too far. */
 			else if (npc->getComponent<CTransform>()->pos.dist(npc->getComponent<CFollowPlayer>()->home) >= npc->getComponent<CFollowPlayer>()->speed * 1.15)
 			{
+				m_hurtSound.stop();
 				Vec2 Norm = (npc->getComponent<CFollowPlayer>()->home - npc->getComponent<CTransform>()->pos).norm();
 				Norm *= npc->getComponent<CFollowPlayer>()->speed;
 				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
@@ -513,6 +532,15 @@ void GameState_Play::sAI()
 			}
 			if (can_see)
 			{
+
+				if (m_hurtSound.getStatus() != sf::Sound::Status::Playing)
+				{
+					std::string animationName = npc->getComponent<CAnimation>()->animation.getName();
+					m_hurtSound.setBuffer(m_game.getAssets().getSound(animationName));
+					m_hurtSound.play();
+
+				}
+
 				if (npc->getComponent<CSteer>()->vel.x != 0 && npc->getComponent<CSteer>()->vel.y != 0 )
 				{
 					Vec2 desired = m_player->getComponent<CTransform>()->pos - npc->getComponent<CTransform>()->pos;
@@ -608,6 +636,8 @@ void GameState_Play::sHealth()
 				death->addComponent<CTransform>();
 				death->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
 				death->addComponent<CAnimation>(m_game.getAssets().getAnimation("death"), false);
+				m_deathSound.setBuffer(m_game.getAssets().getSound("death"));
+				m_deathSound.play();
 			}
 		}
 	}
@@ -658,7 +688,6 @@ void GameState_Play::sCollision()
 				}
 				else if (prevOverLap.y > 5)
 				{
-					std::cout << "XCOL NPC" << std::endl;
 					if (npc->getComponent<CTransform>()->prevPos.x < tile->getComponent<CTransform>()->pos.x)
 					{
 						npc->getComponent<CTransform>()->pos.x -= overLap.x;
@@ -705,12 +734,15 @@ void GameState_Play::sCollision()
 					npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
 				}
 
+				m_hitSound.setBuffer(m_game.getAssets().getSound("gun_hit"));
+				m_hitSound.play();
+
 				npc->getComponent<CHealth>()->hp -= bullet->getComponent<CDamage>()->dmg;
 				bullet->destroy();
-				auto death = m_entityManager.addEntity("effect");
-				death->addComponent<CTransform>();
-				death->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
-				death->addComponent<CAnimation>(m_game.getAssets().getAnimation("death"), false);
+				auto damge = m_entityManager.addEntity("effect");
+				damge->addComponent<CTransform>();
+				damge->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
+				damge->addComponent<CAnimation>(m_game.getAssets().getAnimation("death"), false);
 			}
 
 		}
@@ -737,11 +769,13 @@ void GameState_Play::sCollision()
 				{
 					npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
 				}
-
-				auto death = m_entityManager.addEntity("effect");
-				death->addComponent<CTransform>();
-				death->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
-				death->addComponent<CAnimation>(m_game.getAssets().getAnimation("blood"), false);
+				
+				m_hitSound.setBuffer(m_game.getAssets().getSound("pipe_hit"));
+				m_hitSound.play();
+				auto damge = m_entityManager.addEntity("effect");
+				damge->addComponent<CTransform>();
+				damge->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
+				damge->addComponent<CAnimation>(m_game.getAssets().getAnimation("blood"), false);
 				npc->getComponent<CHealth>()->hp -= meele->getComponent<CDamage>()->dmg;
 				meele->destroy();
 
@@ -766,8 +800,6 @@ void GameState_Play::sCollision()
 				{
 					m_player->getComponent<CTransform>()->pos.x -= overLap.x + 25;
 					npc->getComponent<CTransform>()->pos.x += overLap.x;
-					m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
-
 					if (npc->hasComponent<CSteer>())
 					{
 						npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
@@ -777,7 +809,6 @@ void GameState_Play::sCollision()
 				{
 					m_player->getComponent<CTransform>()->pos.x += overLap.x + 25;
 					npc->getComponent<CTransform>()->pos.x -= overLap.x;
-					m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
 
 					if (npc->hasComponent<CSteer>())
 					{
@@ -793,20 +824,18 @@ void GameState_Play::sCollision()
 				if (m_player->getComponent<CTransform>()->prevPos.y < npc->getComponent<CTransform>()->pos.y)
 				{
 					m_player->getComponent<CTransform>()->speed.y = 0;
-					m_player->getComponent<CTransform>()->pos.y -= overLap.y;
-					m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
+					m_player->getComponent<CTransform>()->pos.y -= overLap.y + 5;
 				}
 
 				/* Check top for Col. Accepts: prevOverLap.x = 0 */
 				else
 				{
-					m_player->getComponent<CTransform>()->pos.y += overLap.y;
-					player_grounded = true;
-					m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
+					m_player->getComponent<CTransform>()->pos.y += overLap.y + 25;
 				}
 			}
-
-
+		m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
+		m_playerSound.setBuffer(m_game.getAssets().getSound("player_hurt"));
+		m_playerSound.play();
 
 		}
 

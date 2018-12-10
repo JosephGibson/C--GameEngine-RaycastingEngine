@@ -129,6 +129,7 @@ class CDamage : public Component
 {
 public:
 	int dmg;
+	sf::SoundBuffer death_sound;
 	CDamage(int damage) : dmg(damage) {}
 };
 
@@ -157,4 +158,4 @@ public:
 	Vec2 home = Vec2 { 0.5, 0.5 };
 	Vec2 vel = Vec2 { 0, 0 };
 	CSteer(float spd, float scale, Vec2 home) : scale(scale), speed(spd), home(home) {};
-};
+}; 
