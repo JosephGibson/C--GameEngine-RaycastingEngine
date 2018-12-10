@@ -9,7 +9,8 @@ Tile rust_1 7 1 1 1
 Tile rust_1 8 1 1 1
 Tile rust_3 9 1 1 1
 Tile rust_1 9 2 1 1
-Tile rust_3 9 4.5 1 1
+Tile rust_4 8 2 1 1
+Tile rust_3 9 3 1 1
 Tile rust_2 10 0 1 1
 Tile rust_3 11 0 1 1
 Tile rust_1 12 0 1 1

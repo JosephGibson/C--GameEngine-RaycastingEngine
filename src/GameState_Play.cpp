@@ -365,22 +365,6 @@ void GameState_Play::sMovement()
 					tile->getComponent<CMoveTile>()->point = 0;
 				}
 			}
-			// {
-			// 	Vec2 Norm = (nextPos - currentPos).norm();
-			// 	Norm *= npc->getComponent<CPatrol>()->speed;
-			// 	if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
-			// 	{
-			// 		npc->getComponent<CTransform>()->speed = Norm;
-			// 	}
-			// 	else
-			// 	{
-			// 		npc->getComponent<CTransform>()->speed.x = Norm.x;
-			// 	}
-			// }
-			// else
-			// {
-			// 	npc->getComponent<CPatrol>()->currentPosition = nextPosNum;
-			// }
 		}
 	}
 	/* Save players speed for easy access. */
@@ -682,7 +666,7 @@ void GameState_Play::sLifespan()
 */
 void GameState_Play::sHealth()
 {
-	if (m_player->getComponent<CHealth>()->hp <= 0)
+	if (m_player->getComponent<CHealth>()->hp <= 0 || m_player->getComponent<CTransform>()->pos.y < -1000)
 	{
 		m_player->destroy();
 		spawnPlayer();
@@ -705,6 +689,7 @@ void GameState_Play::sHealth()
 			}
 		}
 	}
+
 }
 
 
@@ -818,15 +803,14 @@ void GameState_Play::sCollision()
 			if (overLap.x >= 0 && overLap.y >= 0)
 			{
 
-
 				Vec2 prevOverLap = Physics::GetPreviousOverlap(npc, meele);
 				if (npc->getComponent<CTransform>()->prevPos.x < meele->getComponent<CTransform>()->pos.x)
 				{
-					npc->getComponent<CTransform>()->pos.x -= 15;
+					npc->getComponent<CTransform>()->pos.x -= 25;
 				}
 				else
 				{
-					npc->getComponent<CTransform>()->pos.x +=  15;
+					npc->getComponent<CTransform>()->pos.x +=  25;
 				}
 
 				if (npc->hasComponent<CSteer>())
@@ -939,6 +923,7 @@ void GameState_Play::sCollision()
 				Vec2 prevOverLap =  Physics::GetPreviousOverlap(m_player, tile);
 
 				/* Check for Y Collisions */
+
 				if (prevOverLap.x > 0)
 				{
 					/* Check bottom of the tile for Col: */
@@ -951,7 +936,6 @@ void GameState_Play::sCollision()
 					/* Check top for Col. Accepts: prevOverLap.x = 0 */
 					else
 					{
-						m_player->getComponent<CTransform>()->pos.y += overLap.y;
 						player_grounded = true;
 						if (tile->hasComponent<CMoveTile>())
 						{

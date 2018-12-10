@@ -1,63 +1,63 @@
-Texture   TexBlack      	images/tiles/tile_black.png
-Texture   tex_rust_1      	images/tiles/rust_1.jpg
-Texture   tex_rust_2      	images/tiles/rust_2.jpg
-Texture   tex_rust_3      	images/tiles/rust_3.jpg
-Texture   tex_rust_4      	images/tiles/rust_4.jpg
-Texture   tex_concrete_1      	images/tiles/concrete_1.jpg
-Texture   tex_concrete_2      	images/tiles/concrete_2.jpg
-Texture   tex_concrete_3      	images/tiles/concrete_3.jpg
-Texture   tex_concrete_4      	images/tiles/concrete_4.jpg
-Texture   tex_concrete_5      	images/tiles/concrete_5.jpg
-Texture   tex_player_stand      images/player/player_stand.png
-Texture   tex_player_run     	images/player/player_walk.png
-Texture   tex_player_jump      	images/player/player_jump.png
-Texture   tex_spider_run      	images/npc/spider_run.png
-Texture   tex_boss     		images/npc/boss.png
-Texture   tex_pipe  		images/player/pipe.png
-Texture   tex_bullet  		images/player/bullet.png
-Texture   tex_player_shoot  		images/player/player_shoot.png
-Texture   tex_player_whack  		images/player/player_whack.png
-Texture   tex_eye			images/npc/eye.png
-Texture   tex_blood			images/blood.png
-Texture   tex_death			images/death.png
-Texture   tex_health_pack		images/pickup/health_pack.png
-Texture   text_ammo_pack		images/pickup/ammo_pack.png
-Animation blood         	tex_blood       	13    2
-Animation death         	tex_death       	15    3
-Animation pipe         	tex_pipe       	1    0
-Animation bullet         	tex_bullet       	1    0
-Animation eye         	tex_eye       	4    10
-Animation player_whack         	tex_player_whack       	1    0
-Animation health_pack         	tex_health_pack       	1    0
-Animation ammo_pack         	text_ammo_pack       	1    0
-Animation player_shoot         	tex_player_shoot       	1    0
-Animation rust_1         	tex_rust_1       	1    0
-Animation rust_2         	tex_rust_2        	1    0
-Animation rust_3         	tex_rust_3        	1    0
-Animation rust_4         	tex_rust_4       	1    0
-Animation concrete_1         	tex_concrete_1       	1    0
-Animation concrete_2         	tex_concrete_2        	1    0
-Animation concrete_3         	tex_concrete_3        	1    0
-Animation		concrete_4         	tex_concrete_4        	1    0
-Animation		concrete_5         	tex_concrete_5       	1    0
-Animation		player_stand         	tex_player_stand        1    0
-Animation		player_run         	tex_player_run        	4    10
-Animation		player_jump         	tex_player_jump        	1    0
-Animation		spider        	tex_spider_run        	3    5
-Animation		boss        		tex_boss        	4   10
-Animation		Black         	TexBlack        	1    0
-Sound		music_1              sounds/music_1.wav
-Sound		music_menu              sounds/menu_music.wav
-Sound		gun_shoot              sounds/gun_shoot.wav
-Sound		boss              sounds/boss.wav
-Sound		jump              sounds/jump.wav
-Sound		pipe_swing              sounds/pipe_swing.wav
-Sound		spider              sounds/spider.wav
-Sound		death              sounds/death.wav
-Sound		gun_hit              sounds/gun_hit.wav
-Sound		pipe_hit              sounds/pipe_hit.wav
-Sound		health_pack              sounds/health_pack.wav
-Sound		eye              sounds/eye.wav
+Texture		TexBlack		images/tiles/tile_black.png
+Texture		tex_rust_1		images/tiles/rust_1.jpg
+Texture		tex_rust_2		images/tiles/rust_2.jpg
+Texture		tex_rust_3		images/tiles/rust_3.jpg
+Texture		tex_rust_4		images/tiles/rust_4.jpg
+Texture		tex_concrete_1		images/tiles/concrete_1.jpg
+Texture		tex_concrete_2		images/tiles/concrete_2.jpg
+Texture		tex_concrete_3		images/tiles/concrete_3.jpg
+Texture		tex_concrete_4		images/tiles/concrete_4.jpg
+Texture		tex_concrete_5		images/tiles/concrete_5.jpg
+Texture		tex_player_stand		images/player/player_stand.png
+Texture		tex_player_run		images/player/player_walk.png
+Texture		tex_player_jump		images/player/player_jump.png
+Texture		tex_spider_run		images/npc/spider_run.png
+Texture		tex_boss		images/npc/boss.png
+Texture		tex_pipe		images/player/pipe.png
+Texture		tex_bullet		images/player/bullet.png
+Texture		tex_player_shoot		images/player/player_shoot.png
+Texture		tex_player_whack		images/player/player_whack.png
+Texture		tex_eye			images/npc/eye.png
+Texture		tex_blood			images/blood.png
+Texture		tex_death			images/death.png
+Texture		tex_health_pack		images/pickup/health_pack.png
+Texture		text_ammo_pack		images/pickup/ammo_pack.png
+Animation		blood		tex_blood		13		2
+Animation		death		tex_death		15		3
+Animation		pipe		tex_pipe		1		0
+Animation		bullet		tex_bullet		1		0
+Animation		eye		tex_eye		4		10
+Animation		player_whack		tex_player_whack		1		0
+Animation		health_pack		tex_health_pack		1		0
+Animation		ammo_pack		text_ammo_pack		1		0
+Animation		player_shoot		tex_player_shoot		1		0
+Animation		rust_1		tex_rust_1		1		0
+Animation		rust_2		tex_rust_2		1		0
+Animation		rust_3		tex_rust_3		1		0
+Animation		rust_4		tex_rust_4		1		0
+Animation		concrete_1		tex_concrete_1		1		0
+Animation		concrete_2		tex_concrete_2		1		0
+Animation		concrete_3		tex_concrete_3		1		0
+Animation		concrete_4		tex_concrete_4		1		0
+Animation		concrete_5		tex_concrete_5		1		0
+Animation		player_stand		tex_player_stand		1		0
+Animation		player_run		tex_player_run		4		10
+Animation		player_jump		tex_player_jump		1		0
+Animation		spider		tex_spider_run		3		5
+Animation		boss		tex_boss		4		10
+Animation		Black		TexBlack		1		0
+Sound		music_1		sounds/music_1.wav
+Sound		music_menu		sounds/menu_music.wav
+Sound		gun_shoot		sounds/gun_shoot.wav
+Sound		boss		sounds/boss.wav
+Sound		jump		sounds/jump.wav
+Sound		pipe_swing		sounds/pipe_swing.wav
+Sound		spider		sounds/spider.wav
+Sound		death		sounds/death.wav
+Sound		gun_hit		sounds/gun_hit.wav
+Sound		pipe_hit		sounds/pipe_hit.wav
+Sound		health_pack		sounds/health_pack.wav
+Sound		eye		sounds/eye.wav
 Sound		player_hurt		sounds/player_hurt.wav
 Font		Arial			fonts/arial.ttf
 Font		titleFont			fonts/titleFont.ttf
