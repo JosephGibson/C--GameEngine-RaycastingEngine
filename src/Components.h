@@ -149,3 +149,12 @@ public:
 	CItem(int numOf, bool type) : amount(numOf), isAmmo(type) {}
 };
 
+class CSteer : public Component
+{
+public:
+	float scale = 0;
+	float speed = 0;
+	Vec2 home = Vec2 { 0.5, 0.5 };
+	Vec2 vel = Vec2 { 0, 0 };
+	CSteer(float spd, float scale, Vec2 home) : scale(scale), speed(spd), home(home) {};
+};

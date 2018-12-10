@@ -135,6 +135,12 @@ void GameState_Play::loadLevel(const std::string & filename)
 				}
 				e->addComponent<CPatrol>(pos, speed);
 			}
+			else if ( aiName == "Steer")
+			{
+				float speed, scale;
+				file >> speed >> scale;
+				e->addComponent<CSteer>(speed, scale, e->getComponent<CTransform>()->pos);
+			}
 		}
 	}
 	spawnPlayer();
@@ -230,7 +236,7 @@ void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity) // add check fo
 		bullet->addComponent<CAnimation>(m_game.getAssets().getAnimation("bullet"), true);
 		bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("bullet").getSize().x, m_game.getAssets().getAnimation("bullet").getSize().y), false, false);
 		bullet->addComponent<CLifeSpan>(2000);
-		bullet->addComponent<CDamage>(50);
+		bullet->addComponent<CDamage>(100);
 		m_player->getComponent<CInventory>()->ammo -= 1;
 
 		m_canShoot = false;
@@ -244,7 +250,7 @@ void GameState_Play::spawnMeele(std::shared_ptr<Entity> entity) // add check for
 	auto meele = m_entityManager.addEntity("meele");
 	meele->addComponent<CTransform>();
 	meele->addComponent<CAnimation>(m_game.getAssets().getAnimation("pipe"), true);
-	meele->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("pipe").getSize().x, m_game.getAssets().getAnimation("pipe").getSize().y), false, false);
+	meele->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("pipe").getSize().x * 1.35, m_game.getAssets().getAnimation("pipe").getSize().y * 2), false, false);
 	meele->addComponent<CLifeSpan>(200);
 	meele->addComponent<CDamage>(15);
 	m_canShoot = false;
@@ -289,7 +295,6 @@ void GameState_Play::sMovement()
 	/* Do NPC speed asignments for current cycle */
 	for (auto &  npc : m_entityManager.getEntities("NPC"))
 	{
-		//	std::cout << npc->getComponent<CTransform>()->pos.x << " " << npc->getComponent<CTransform>()->pos.y << std::endl;
 		if (!npc->getComponent<CState>()->grounded)
 		{
 			npc->getComponent<CTransform>()->speed.y -= npc->getComponent<CGravity>()->gravity;
@@ -298,8 +303,11 @@ void GameState_Play::sMovement()
 		{
 			npc->getComponent<CTransform>()->speed.y = 0;
 		}
-		npc->getComponent<CTransform>()->prevPos = npc->getComponent<CTransform>()->pos;
-		npc->getComponent<CTransform>()->pos += npc->getComponent<CTransform>()->speed;
+		if (!npc->hasComponent<CSteer>())
+		{
+			npc->getComponent<CTransform>()->prevPos = npc->getComponent<CTransform>()->pos;
+			npc->getComponent<CTransform>()->pos += npc->getComponent<CTransform>()->speed;
+		}
 	}
 
 
@@ -384,6 +392,7 @@ void GameState_Play::sAI()
 	/* Check every NPC for AI udates. */
 	for (auto & npc : m_entityManager.getEntities("NPC"))
 	{
+
 		if (npc->hasComponent<CFollowPlayer>())
 		{
 			/* Use bool can see to keep track if any block breaks LOS */
@@ -406,8 +415,10 @@ void GameState_Play::sAI()
 			{
 				Vec2 Norm = (m_player->getComponent<CTransform>()->pos - npc->getComponent<CTransform>()->pos).norm();
 				Norm *= npc->getComponent<CFollowPlayer>()->speed;
+				std::cout << Norm.x << std::endl;
 				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
 				{
+
 					npc->getComponent<CTransform>()->speed = Norm;
 				}
 				else
@@ -481,7 +492,73 @@ void GameState_Play::sAI()
 			{
 				npc->getComponent<CPatrol>()->currentPosition = nextPosNum;
 			}
+		}
 
+		else if (npc->hasComponent<CSteer>())
+		{
+			/* Use bool can see to keep track if any block breaks LOS */
+			bool can_see = true;
+
+			/* Check for tile line intersetions. */
+			for (auto & tile : m_entityManager.getEntities("Tile"))
+			{
+				/* Check tile for appropriate components */
+				if (tile->hasComponent<CBoundingBox>() && tile->getComponent<CBoundingBox>()->blockVision)
+				{
+					if (Physics::EntityIntersect(npc->getComponent<CTransform>()->pos, m_player->getComponent<CTransform>()->pos, tile))
+					{
+						can_see = false;
+					}
+				}
+			}
+			if (can_see)
+			{
+				if (npc->getComponent<CSteer>()->vel.x != 0 && npc->getComponent<CSteer>()->vel.y != 0 )
+				{
+					Vec2 desired = m_player->getComponent<CTransform>()->pos - npc->getComponent<CTransform>()->pos;
+					desired = desired.norm() * npc->getComponent<CSteer>()->speed;
+					Vec2 steering = (desired - npc->getComponent<CSteer>()->vel) * npc->getComponent<CSteer>()->scale ;
+
+
+					npc->getComponent<CSteer>()->vel = npc->getComponent<CSteer>()->vel + steering;
+					npc->getComponent<CTransform>()->prevPos = npc->getComponent<CTransform>()->pos;
+					npc->getComponent<CTransform>()->pos += npc->getComponent<CSteer>()->vel;
+
+					if (npc->getComponent<CTransform>()->pos.x < m_player->getComponent<CTransform>()->pos.x)
+					{
+						npc->getComponent<CTransform>()->scale.x = -1;
+					}
+					else
+					{
+						npc->getComponent<CTransform>()->scale.x = 1;
+					}
+				}
+				else
+				{
+					Vec2 vel = (m_player->getComponent<CTransform>()->pos - npc->getComponent<CTransform>()->pos).norm();
+					vel *= npc->getComponent<CSteer>()->speed;
+					npc->getComponent<CSteer>()->vel = vel;
+				}
+			}
+			/* Check if the NPCS is close that a movement would push them too far. */
+			else if (npc->getComponent<CTransform>()->pos.dist(npc->getComponent<CSteer>()->home) >= npc->getComponent<CSteer>()->speed * 1.15)
+			{
+				Vec2 Norm = (npc->getComponent<CSteer>()->home - npc->getComponent<CTransform>()->pos).norm();
+				Norm *= npc->getComponent<CSteer>()->speed;
+				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+				{
+					npc->getComponent<CTransform>()->pos += Norm;
+				}
+				else
+				{
+					npc->getComponent<CTransform>()->speed.x = Norm.x;
+				}
+			}
+			/* Else, the player is now home. */
+			else
+			{
+				npc->getComponent<CTransform>()->pos = npc->getComponent<CSteer>()->home;
+			}
 		}
 	}
 }
@@ -526,8 +603,11 @@ void GameState_Play::sHealth()
 		{
 			if (npc->getComponent<CHealth>()->hp <= 0)
 			{
-				
 				npc->destroy();
+				auto death = m_entityManager.addEntity("effect");
+				death->addComponent<CTransform>();
+				death->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
+				death->addComponent<CAnimation>(m_game.getAssets().getAnimation("death"), false);
 			}
 		}
 	}
@@ -547,7 +627,9 @@ void GameState_Play::sCollision()
 	/** Check for NPC cols**/
 	for (auto & npc : m_entityManager.getEntities("NPC"))
 	{
+
 		bool NPC_Grounded = false;
+
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
 			Vec2 overLap = Physics::GetOverlap(npc, tile);
@@ -557,18 +639,7 @@ void GameState_Play::sCollision()
 				/* The previous overlap to resolve col.*/
 				Vec2 prevOverLap = Physics::GetPreviousOverlap(npc, tile);
 
-				if (prevOverLap.y > 0)
-				{
-					if (npc->getComponent<CTransform>()->prevPos.x < tile->getComponent<CTransform>()->pos.x)
-					{
-						npc->getComponent<CTransform>()->pos.x -= overLap.x;
-					}
-					else
-					{
-						npc->getComponent<CTransform>()->pos.x += overLap.x;
-					}
-				}
-				else if (prevOverLap.x > 0)
+				if (prevOverLap.x > 0)
 				{
 					/* Check bottom of the tile for Col: */
 					if (npc->getComponent<CTransform>()->prevPos.y < tile->getComponent<CTransform>()->pos.y)
@@ -584,6 +655,18 @@ void GameState_Play::sCollision()
 						NPC_Grounded = true;
 					}
 
+				}
+				else if (prevOverLap.y > 5)
+				{
+					std::cout << "XCOL NPC" << std::endl;
+					if (npc->getComponent<CTransform>()->prevPos.x < tile->getComponent<CTransform>()->pos.x)
+					{
+						npc->getComponent<CTransform>()->pos.x -= overLap.x;
+					}
+					else
+					{
+						npc->getComponent<CTransform>()->pos.x += overLap.x;
+					}
 				}
 			}
 
@@ -606,9 +689,30 @@ void GameState_Play::sCollision()
 
 			if (overLap.x >= 0 && overLap.y >= 0)
 			{
+
+				Vec2 prevOverLap = Physics::GetPreviousOverlap(npc, bullet);
+				if (npc->getComponent<CTransform>()->prevPos.x < bullet->getComponent<CTransform>()->pos.x)
+				{
+					npc->getComponent<CTransform>()->pos.x -= 15;
+				}
+				else
+				{
+					npc->getComponent<CTransform>()->pos.x +=  15;
+				}
+
+				if (npc->hasComponent<CSteer>())
+				{
+					npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
+				}
+
 				npc->getComponent<CHealth>()->hp -= bullet->getComponent<CDamage>()->dmg;
 				bullet->destroy();
+				auto death = m_entityManager.addEntity("effect");
+				death->addComponent<CTransform>();
+				death->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
+				death->addComponent<CAnimation>(m_game.getAssets().getAnimation("death"), false);
 			}
+
 		}
 
 		for (auto & meele : m_entityManager.getEntities("meele"))
@@ -620,20 +724,27 @@ void GameState_Play::sCollision()
 
 
 				Vec2 prevOverLap = Physics::GetPreviousOverlap(npc, meele);
-
-				if (prevOverLap.y > 0)
+				if (npc->getComponent<CTransform>()->prevPos.x < meele->getComponent<CTransform>()->pos.x)
 				{
-					if (npc->getComponent<CTransform>()->prevPos.x < meele->getComponent<CTransform>()->pos.x)
-					{
-						npc->getComponent<CTransform>()->pos.x -= npc->getComponent<CGravity>()->knockback;
-					}
-					else
-					{
-						npc->getComponent<CTransform>()->pos.x +=  npc->getComponent<CGravity>()->knockback;
-					}
+					npc->getComponent<CTransform>()->pos.x -= 15;
 				}
+				else
+				{
+					npc->getComponent<CTransform>()->pos.x +=  15;
+				}
+
+				if (npc->hasComponent<CSteer>())
+				{
+					npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
+				}
+
+				auto death = m_entityManager.addEntity("effect");
+				death->addComponent<CTransform>();
+				death->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
+				death->addComponent<CAnimation>(m_game.getAssets().getAnimation("blood"), false);
 				npc->getComponent<CHealth>()->hp -= meele->getComponent<CDamage>()->dmg;
 				meele->destroy();
+
 			}
 		}
 
@@ -653,13 +764,25 @@ void GameState_Play::sCollision()
 			{
 				if (m_player->getComponent<CTransform>()->prevPos.x < npc->getComponent<CTransform>()->pos.x)
 				{
-					m_player->getComponent<CTransform>()->pos.x -= overLap.x + 20;
+					m_player->getComponent<CTransform>()->pos.x -= overLap.x + 25;
 					npc->getComponent<CTransform>()->pos.x += overLap.x;
+					m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
+
+					if (npc->hasComponent<CSteer>())
+					{
+						npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
+					}
 				}
 				else
 				{
-					m_player->getComponent<CTransform>()->pos.x += overLap.x + 20;
+					m_player->getComponent<CTransform>()->pos.x += overLap.x + 25;
 					npc->getComponent<CTransform>()->pos.x -= overLap.x;
+					m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
+
+					if (npc->hasComponent<CSteer>())
+					{
+						npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
+					}
 				}
 			}
 
@@ -671,6 +794,7 @@ void GameState_Play::sCollision()
 				{
 					m_player->getComponent<CTransform>()->speed.y = 0;
 					m_player->getComponent<CTransform>()->pos.y -= overLap.y;
+					m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
 				}
 
 				/* Check top for Col. Accepts: prevOverLap.x = 0 */
@@ -678,10 +802,11 @@ void GameState_Play::sCollision()
 				{
 					m_player->getComponent<CTransform>()->pos.y += overLap.y;
 					player_grounded = true;
+					m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
 				}
 			}
 
-			m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
+
 
 		}
 

@@ -18,8 +18,12 @@ Texture   tex_bullet  		images/player/bullet.png
 Texture   tex_player_shoot  		images/player/player_shoot.png
 Texture   tex_player_whack  		images/player/player_whack.png
 Texture   tex_eye			images/npc/eye.png
+Texture   tex_blood			images/blood.png
+Texture   tex_death			images/death.png
 Texture   tex_health_pack		images/pickup/health_pack.png
 Texture   text_ammo_pack		images/pickup/ammo_pack.png
+Animation blood         	tex_blood       	13    2
+Animation death         	tex_death       	15    3
 Animation pipe         	tex_pipe       	1    0
 Animation bullet         	tex_bullet       	1    0
 Animation eye         	tex_eye       	4    10
