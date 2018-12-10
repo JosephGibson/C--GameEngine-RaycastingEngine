@@ -953,6 +953,14 @@ void GameState_Play::sCollision()
 					{
 						m_player->getComponent<CTransform>()->pos.y += overLap.y;
 						player_grounded = true;
+						if (tile->hasComponent<CMoveTile>())
+						{
+							m_player->getComponent<CTransform>()->pos.y = tile->getComponent<CTransform>()->pos.y + 63;
+						}
+						else
+						{
+							m_player->getComponent<CTransform>()->pos.y += overLap.y;
+						}
 					}
 				}
 				/* Check for X collison, resolve first.*/
