@@ -1259,7 +1259,6 @@ void GameState_Play::sLight()
 	for (int i = 1; i < intersetions.size(); i += 1)
 	{
 		float point_to_player = 1 - pPos.dist(Vec2(intersetions[i].x, intersetions[i].y)) / m_player->getComponent<CLight>()->dist;
-		float point_to_player = 55;
 		TriangleFan[i].position = sf::Vector2f(intersetions[i].x, intersetions[i].y);
 		TriangleFan[i].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
 	}
