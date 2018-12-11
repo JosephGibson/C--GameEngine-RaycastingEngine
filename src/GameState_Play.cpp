@@ -378,7 +378,7 @@ void GameState_Play::sMovement()
 			}
 
 			/** Check for distance and speed. **/
-			if (tile->getComponent<CTransform>()->pos.dist(target) >= 5)
+			if (tile->getComponent<CTransform>()->pos.fastDist(target) >= 25)
 			{
 				Vec2 Norm = (target - tile->getComponent<CTransform>()->pos).norm();
 				Norm *= tile->getComponent<CMoveTile>()->speed;
@@ -568,44 +568,6 @@ void GameState_Play::sAI()
 
 		}
 
-		/*Check for patrol updates */
-		else if (npc->hasComponent<CPatrol>())
-		{
-			size_t nextPosNum = 0;
-			size_t posNum = npc->getComponent<CPatrol>()->currentPosition;
-
-			if (posNum + 1 < npc->getComponent<CPatrol>()->positions.size())
-			{
-				nextPosNum = posNum + 1;
-			}
-			else
-			{
-				nextPosNum = 0;
-			}
-
-			/* Get the next postion and the current postion. */
-			Vec2 currentPos = npc->getComponent<CPatrol>()->positions[posNum];
-			Vec2 nextPos = npc->getComponent<CPatrol>()->positions[nextPosNum];
-
-			if (npc->getComponent<CTransform>()->pos.dist(nextPos) >= 5)
-			{
-				Vec2 Norm = (nextPos - currentPos).norm();
-				Norm *= npc->getComponent<CPatrol>()->speed;
-				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
-				{
-					npc->getComponent<CTransform>()->speed = Norm;
-				}
-				else
-				{
-					npc->getComponent<CTransform>()->speed.x = Norm.x;
-				}
-			}
-			else
-			{
-				npc->getComponent<CPatrol>()->currentPosition = nextPosNum;
-			}
-		}
-
 		else if (npc->hasComponent<CSteer>())
 		{
 			/* Use bool can see to keep track if any block breaks LOS */
@@ -702,19 +664,16 @@ void GameState_Play::sHealth()
 
 	for (auto & npc : m_entityManager.getEntities("NPC"))
 	{
-		if (npc->hasComponent<CHealth>())
+		if (npc->hasComponent<CHealth>() && npc->getComponent<CHealth>()->hp <= 0)
 		{
-			if (npc->getComponent<CHealth>()->hp <= 0)
-			{
-				npc->destroy();
-				auto death = m_entityManager.addEntity("effect");
-				death->addComponent<CTransform>();
-				death->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
-				death->addComponent<CAnimation>(m_game.getAssets().getAnimation("death"), false);
-				m_deathSound.setBuffer(m_game.getAssets().getSound("death"));
-				m_deathSound.play();
-				m_hurtSound.stop();
-			}
+			npc->destroy();
+			auto death = m_entityManager.addEntity("effect");
+			death->addComponent<CTransform>();
+			death->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
+			death->addComponent<CAnimation>(m_game.getAssets().getAnimation("death"), false);
+			m_deathSound.setBuffer(m_game.getAssets().getSound("death"));
+			m_deathSound.play();
+			m_hurtSound.stop();
 		}
 	}
 
@@ -1080,7 +1039,6 @@ void GameState_Play::sAnimation()
 
 void GameState_Play::sLight()
 {
-	m_Light_Lines.clear();
 	std::vector<Vec2> intersetions;
 
 
@@ -1094,13 +1052,16 @@ void GameState_Play::sLight()
 	for (int angle = 0; angle < 360; angle += 12)
 	{
 
+		float dx,dy;
 		bool no_intersect = true;
 
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
 			if (tile->getComponent<CTransform>()->pos.fastDist(playPos) < d2)
 			{
-				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + std::cos((angle * 3.1459) / 180) * dist, pPos.y + std::sin((angle * 3.1459) / 180) * dist), tile))
+				dx =  std::cos((angle * 3.1459) / 180) * dist;
+				dy =  std::sin((angle * 3.1459) / 180) * dist;
+				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + dx, pPos.y + dy), tile))
 				{
 					no_intersect = false;
 					break;
@@ -1110,8 +1071,7 @@ void GameState_Play::sLight()
 
 		if (no_intersect)
 		{
-			Vec2 k = Vec2(std::cos((angle * 3.1459) / 180) * dist, std::sin((angle * 3.1459) / 180) * dist);
-			intersetions.push_back(k);
+			intersetions.push_back(Vec2(dx, dy));
 		}
 
 	}
@@ -1219,6 +1179,7 @@ void GameState_Play::sLight()
 	std::sort(intersetions.begin(), intersetions.end());
 
 	sf::VertexArray TriangleFan(sf::TriangleFan, intersetions.size() + 2);
+
 	std::for_each(intersetions.begin(), intersetions.end(), [pPos](Vec2 & v) { v += pPos ;});
 
 	TriangleFan[0].position = sf::Vector2f(pPos.x, pPos.y);
@@ -1226,17 +1187,17 @@ void GameState_Play::sLight()
 
 	for (int i = 1; i < intersetions.size(); i += 1)
 	{
-		float point_to_player = 1 - pPos.dist(intersetions[i]) / m_player->getComponent<CLight>()->dist;
+		float point_to_player = 1 - pPos.dist(intersetions[i]) / dist;
 		TriangleFan[i].position = sf::Vector2f(intersetions[i].x, intersetions[i].y);
 		TriangleFan[i].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
 	}
 
 	/** Connect the final points in TF **/
 
-	float point_to_player = 1 - pPos.dist(intersetions[0]) / m_player->getComponent<CLight>()->dist;
+	float point_to_player = 1 - pPos.dist(intersetions[0]) / dist;
 	TriangleFan[intersetions.size()].position = sf::Vector2f(intersetions[0].x, intersetions[0].y);
 	TriangleFan[intersetions.size()].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
-	point_to_player = 1 - pPos.dist(intersetions[1]) / m_player->getComponent<CLight>()->dist;
+	point_to_player = 1 - pPos.dist(intersetions[1]) / dist;
 	TriangleFan[intersetions.size() + 1].position = sf::Vector2f(intersetions[1].x, intersetions[1].y);
 	TriangleFan[intersetions.size() + 1].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
 	m_lightPoly.clear();
@@ -1249,7 +1210,7 @@ void GameState_Play::sLight()
  * @brief      { The user input system.}
  */
 
-void GameState_Play::sUserInput()
+void GameState_Play::sUserInput()\
 {
 	auto pInput = m_player->getComponent<CInput>();
 

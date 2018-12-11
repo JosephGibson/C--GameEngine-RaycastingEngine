@@ -23,12 +23,9 @@ protected:
 	std::shared_ptr<Entity> 		m_player;
 	std::string						m_levelPath;
 	PlayerConfig					m_playerConfig;
-	bool                            m_canShoot = true;
+	bool							m_canShoot = true;
 	sf::Clock 						m_shoot_timer;
-	int                             m_shoot_Max = 200;
-	std::vector<int>				m_RoomsX = { -1, 0, 1};
-	std::vector<int>				m_RoomsY = { -1, 0, 1};
-	std::vector<sf::VertexArray>	m_Light_Lines;
+	int								m_shoot_Max = 200;
 	sf::RenderTexture				m_background;
 	sf::VertexArray					m_lightPoly;
 	sf::Sound						m_pickUpSound;
