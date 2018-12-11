@@ -24,7 +24,6 @@ void GameState_Play::init(const std::string & levelPath)
 {
 	m_lightPoly = sf::VertexArray(sf::TrianglesFan);
 	m_background.create(1344, 768);
-	m_background.setSmooth(true);
 	m_backgroundMusic.setBuffer(m_game.getAssets().getSound("music_1"));
 	m_backgroundMusic.setLoop(true);
 	m_backgroundMusic.setVolume(70);
@@ -1105,45 +1104,43 @@ void GameState_Play::sLight()
 
 
 	/*Cast a ray every 5 degree from player, remove if intersect. */
+	Vec2 playPos = m_player->getComponent<CTransform>()->pos;
 	Vec2 pPos = m_player->getComponent<CTransform>()->pos;
 	pPos.y = m_game.window().getDefaultView().getSize().y  - pPos.y;
 	float dist = m_player->getComponent<CLight>()->dist;
 
-	for (int angle = 0; angle < 360; angle += 5)
+	
+	for (int angle = 0; angle < 360; angle += 18)
 	{
-
-		float dx = std::cos( (angle * 3.1456 ) / 180);
-		float dy = std::sin( (angle * 3.1456 ) / 180);
-		sf::VertexArray lines(sf::LinesStrip, 2);
 
 		bool no_intersect = true;
 
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
-			if (tile->getComponent<CTransform>()->pos.dist(m_player->getComponent<CTransform>()->pos) <  m_player->getComponent<CLight>()->dist)
+			if (tile->getComponent<CTransform>()->pos.dist(playPos) <  dist)
 			{
-				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + dx * m_player->getComponent<CLight>()->dist, pPos.y + dy * m_player->getComponent<CLight>()->dist), tile))
+				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + std::cos((angle * 3.145) / 180) * dist, pPos.y + std::sin((angle * 3.145) / 180) * dist), tile))
 				{
 					no_intersect = false;
 					break;
 				}
 			}
-
 		}
 
 		if (no_intersect)
 		{
-			Vec2 k = Vec2(dx * m_player->getComponent<CLight>()->dist, dy * m_player->getComponent<CLight>()->dist);
+			Vec2 k = Vec2(std::cos((angle * 3.145) / 180) * dist, std::sin((angle * 3.145) / 180) * dist);
 			intersetions.push_back(k);
 		}
 
 	}
+	
 
 	/*	For every vert in a tile cast a point to the player. */
 	/*	Assume not intersection, correct if not.             */
 	for (auto & end_tile : m_entityManager.getEntities("Tile"))
 	{
-		if (end_tile->getComponent<CTransform>()->pos.dist(m_player->getComponent<CTransform>()->pos) <  m_player->getComponent<CLight>()->dist)
+		if (end_tile->getComponent<CTransform>()->pos.dist(playPos) <  dist)
 		{
 			std::vector<bool> points(4);
 			points[0] = true;
@@ -1183,7 +1180,7 @@ void GameState_Play::sLight()
 
 				for (auto & intersect_tile : m_entityManager.getEntities("Tile"))
 				{
-					if (intersect_tile->getComponent<CTransform>()->pos.dist(m_player->getComponent<CTransform>()->pos) <  m_player->getComponent<CLight>()->dist)
+					if (intersect_tile->getComponent<CTransform>()->pos.dist(playPos) <  m_player->getComponent<CLight>()->dist)
 					{
 						Vec2 intersect_origin = intersect_tile->getComponent<CTransform>()->pos;
 						intersect_origin.y = m_game.window().getDefaultView().getSize().y - intersect_origin.y;
@@ -1241,8 +1238,7 @@ void GameState_Play::sLight()
 					}
 					if (pPos.dist(vert) <= dist )
 					{
-						Vec2 p = vert - pPos;
-						intersetions.push_back(p);
+						intersetions.push_back(vert - pPos);
 					}
 				}
 			}
@@ -1253,7 +1249,6 @@ void GameState_Play::sLight()
 
 	/** Sort all points clockwise for triangle fan. **/
 	std::sort(intersetions.begin(), intersetions.end());
-
 	sf::VertexArray TriangleFan(sf::TriangleFan, intersetions.size() + 2);
 
 	TriangleFan[0].position = sf::Vector2f(pPos.x, pPos.y);
@@ -1274,6 +1269,7 @@ void GameState_Play::sLight()
 	point_to_player = 1 - pPos.dist(Vec2(intersetions[1].x + pPos.x, intersetions[1].y + pPos.y)) / m_player->getComponent<CLight>()->dist;
 	TriangleFan[intersetions.size() + 1].position = sf::Vector2f(intersetions[1].x + pPos.x, intersetions[1].y + pPos.y);
 	TriangleFan[intersetions.size() + 1].color = sf::Color(255 * point_to_player, 255 * point_to_player, 195 * point_to_player, 255 * point_to_player);
+	m_lightPoly.clear();
 	m_lightPoly = TriangleFan;
 
 
@@ -1344,7 +1340,7 @@ void GameState_Play::sUserInput()
 void GameState_Play::sRender()
 {
 	m_game.window().clear(sf::Color(185, 175, 175));
-	m_background.clear(sf::Color(10, 10, 10, 245));
+	m_background.clear(sf::Color(23, 23, 23));
 	sf::View view(m_game.window().getDefaultView());
 
 	/* use center of view to position hp and item counts/selection */
