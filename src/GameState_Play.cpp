@@ -1049,16 +1049,24 @@ void GameState_Play::sLight()
 	float dist = m_player->getComponent<CLight>()->dist;
 	float d2 = dist * dist;
 
+	std::vector<std::shared_ptr<Entity>> tiles;
+
+	for (auto & tile : m_entityManager.getEntities("Tile"))
+	{
+		if (tile->getComponent<CTransform>()->pos.fastDist(playPos) <  d2)
+		{
+			tiles.push_back(tile);
+		}
+	}
+
 	for (int angle = 0; angle < 360; angle += 12)
 	{
 
-		float dx,dy;
+		float dx, dy;
 		bool no_intersect = true;
 
-		for (auto & tile : m_entityManager.getEntities("Tile"))
+		for (auto & tile : tiles)
 		{
-			if (tile->getComponent<CTransform>()->pos.fastDist(playPos) < d2)
-			{
 				dx =  cosf((angle * 3.1459) / 180) * dist;
 				dy =  sinf((angle * 3.1459) / 180) * dist;
 				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + dx, pPos.y + dy), tile))
@@ -1066,7 +1074,6 @@ void GameState_Play::sLight()
 					no_intersect = false;
 					break;
 				}
-			}
 		}
 
 		if (no_intersect)
@@ -1076,101 +1083,94 @@ void GameState_Play::sLight()
 
 	}
 
-
 	/*	For every vert in a tile cast a point to the player. */
 	/*	Assume not intersection, correct if not.             */
-	for (auto & end_tile : m_entityManager.getEntities("Tile"))
+	for (auto & end_tile : tiles)
 	{
-		if (end_tile->getComponent<CTransform>()->pos.fastDist(playPos) <  d2)
+		std::vector<bool> points(4);
+		points[0] = true;
+		points[1] = true;
+		points[2] = true;
+		points[3] = true;
+
+
+		Vec2 end_origin = end_tile->getComponent<CTransform>()->pos;
+		end_origin.y = m_game.window().getDefaultView().getSize().y - end_origin.y;
+		Vec2 end_bb = end_tile->getComponent<CBoundingBox>()->halfSize;
+
+
+		Vec2 end_v1 = Vec2(end_origin.x - end_bb.x, end_origin.y - end_bb.y);
+		Vec2 end_v2 = Vec2(end_origin.x + end_bb.x, end_origin.y - end_bb.y);
+		Vec2 end_v3 = Vec2(end_origin.x + end_bb.x, end_origin.y + end_bb.y);
+		Vec2 end_v4 = Vec2(end_origin.x - end_bb.x, end_origin.y + end_bb.y);
+
+		for (int i = 0; i < 4; i++)
 		{
-			std::vector<bool> points(4);
-			points[0] = true;
-			points[1] = true;
-			points[2] = true;
-			points[3] = true;
-
-
-			Vec2 end_origin = end_tile->getComponent<CTransform>()->pos;
-			end_origin.y = m_game.window().getDefaultView().getSize().y - end_origin.y;
-			Vec2 end_bb = end_tile->getComponent<CBoundingBox>()->halfSize;
-
-
-			Vec2 end_v1 = Vec2(end_origin.x - end_bb.x, end_origin.y - end_bb.y);
-			Vec2 end_v2 = Vec2(end_origin.x + end_bb.x, end_origin.y - end_bb.y);
-			Vec2 end_v3 = Vec2(end_origin.x + end_bb.x, end_origin.y + end_bb.y);
-			Vec2 end_v4 = Vec2(end_origin.x - end_bb.x, end_origin.y + end_bb.y);
-
-			for (int i = 0; i < 4; i++)
+			Vec2 vert;
+			switch (i)
 			{
-				Vec2 vert;
-				switch (i)
+			case 0:
+				vert = end_v1;
+				break;
+			case 1:
+				vert = end_v2;
+				break;
+			case 2:
+				vert = end_v3;
+				break;
+			case 3:
+				vert = end_v4;
+				break;
+			}
+
+			for (auto & intersect_tile : tiles)
+			{
+				Vec2 intersect_origin = intersect_tile->getComponent<CTransform>()->pos;
+				intersect_origin.y = m_game.window().getDefaultView().getSize().y - intersect_origin.y;
+				Vec2 intersect_bb = intersect_tile->getComponent<CBoundingBox>()->halfSize;
+
+				Vec2 int_v1 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y - intersect_bb.y);
+				Vec2 int_v2 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y - intersect_bb.y);
+				Vec2 int_v3 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y + intersect_bb.y);
+				Vec2 int_v4 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y + intersect_bb.y);
+
+				if (Physics::LineIntersect(pPos, vert, int_v1, int_v2))
 				{
-				case 0:
-					vert = end_v1;
-					break;
-				case 1:
-					vert = end_v2;
-					break;
-				case 2:
-					vert = end_v3;
-					break;
-				case 3:
-					vert = end_v4;
+					points[i] = false;
 					break;
 				}
-
-				for (auto & intersect_tile : m_entityManager.getEntities("Tile"))
+				else if (Physics::LineIntersect(pPos, vert, int_v2, int_v3))
 				{
-					if (intersect_tile->getComponent<CTransform>()->pos.fastDist(playPos) <  d2)
-					{
-						Vec2 intersect_origin = intersect_tile->getComponent<CTransform>()->pos;
-						intersect_origin.y = m_game.window().getDefaultView().getSize().y - intersect_origin.y;
-						Vec2 intersect_bb = intersect_tile->getComponent<CBoundingBox>()->halfSize;
-
-						Vec2 int_v1 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y - intersect_bb.y);
-						Vec2 int_v2 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y - intersect_bb.y);
-						Vec2 int_v3 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y + intersect_bb.y);
-						Vec2 int_v4 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y + intersect_bb.y);
-
-						if (Physics::LineIntersect(pPos, vert, int_v1, int_v2))
-						{
-							points[i] = false;
-							break;
-						}
-						else if (Physics::LineIntersect(pPos, vert, int_v2, int_v3))
-						{
-							points[i] = false;
-							break;
-						}
-						else if (Physics::LineIntersect(pPos, vert, int_v3, int_v4))
-						{
-							points[i] = false;
-							break;
-						}
-						else if (Physics::LineIntersect(pPos, vert, int_v4, int_v1))
-						{
-							points[i] = false;
-							break;
-						}
-					}
+					points[i] = false;
+					break;
+				}
+				else if (Physics::LineIntersect(pPos, vert, int_v3, int_v4))
+				{
+					points[i] = false;
+					break;
+				}
+				else if (Physics::LineIntersect(pPos, vert, int_v4, int_v1))
+				{
+					points[i] = false;
+					break;
 				}
 			}
-			if (points[0] && pPos.fastDist(end_v1) < d2 )
-			{
-				intersetions.push_back(end_v1 - pPos);
-			}
-			if (points[1] && pPos.fastDist(end_v2) < d2 )
-			{
-				intersetions.push_back(end_v2 - pPos);
-			}
-			if (points[2] && pPos.fastDist(end_v3) < d2 )
-			{
-				intersetions.push_back(end_v3 - pPos);
-			}
-			if (points[3] && pPos.fastDist(end_v4) < d2 )
-			{
-				intersetions.push_back(end_v4 - pPos);
-			}
+		}
+		if (points[0] && pPos.fastDist(end_v1) < d2 )
+		{
+			intersetions.push_back(end_v1 - pPos);
+		}
+		if (points[1] && pPos.fastDist(end_v2) < d2 )
+		{
+			intersetions.push_back(end_v2 - pPos);
+		}
+		if (points[2] && pPos.fastDist(end_v3) < d2 )
+		{
+			intersetions.push_back(end_v3 - pPos);
+		}
+		if (points[3] && pPos.fastDist(end_v4) < d2 )
+		{
+			intersetions.push_back(end_v4 - pPos);
 		}
 	}
 
