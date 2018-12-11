@@ -81,7 +81,7 @@ float Vec2::operator * (const Vec2 & rhs) const
 
 float Vec2::dist(const Vec2 & rhs) const
 {
-	return sqrtf((x - rhs.x) * (x - rhs.x) + (y - rhs.y) * (y - rhs.y));
+	return sqrt((x - rhs.x) * (x - rhs.x) + (y - rhs.y) * (y - rhs.y));
 }
 
 

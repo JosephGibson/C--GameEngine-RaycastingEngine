@@ -165,7 +165,7 @@ void GameState_Play::loadLevel(const std::string & filename)
 			{
 				float speed, scale;
 				file >> speed >> scale;
-				e->addComponent<CSteer>(speed, scale, e->getComponent<CTransform>()->pos);
+				e->addComponent<CSteer>(speed, scale);
 			}
 		}
 	}
@@ -661,25 +661,6 @@ void GameState_Play::sAI()
 					npc->getComponent<CSteer>()->vel = vel;
 				}
 			}
-			/* Check if the NPCS is close that a movement would push them too far. */
-			else if (npc->getComponent<CTransform>()->pos.dist(npc->getComponent<CSteer>()->home) >= npc->getComponent<CSteer>()->speed * 1.15)
-			{
-				Vec2 Norm = (npc->getComponent<CSteer>()->home - npc->getComponent<CTransform>()->pos).norm();
-				Norm *= npc->getComponent<CSteer>()->speed;
-				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
-				{
-					npc->getComponent<CTransform>()->pos += Norm;
-				}
-				else
-				{
-					npc->getComponent<CTransform>()->speed.x = Norm.x;
-				}
-			}
-			/* Else, the player is now home. */
-			else
-			{
-				npc->getComponent<CTransform>()->pos = npc->getComponent<CSteer>()->home;
-			}
 		}
 	}
 }
@@ -1110,16 +1091,16 @@ void GameState_Play::sLight()
 	float dist = m_player->getComponent<CLight>()->dist;
 	float d2 = dist * dist;
 
-	for (int angle = 0; angle < 360; angle += 18)
+	for (int angle = 0; angle < 360; angle += 12)
 	{
 
 		bool no_intersect = true;
 
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
-			if (tile->getComponent<CTransform>()->pos.fastDist(playPos) <  d2)
+			if (tile->getComponent<CTransform>()->pos.fastDist(playPos) < d2)
 			{
-				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + std::cos((angle * 3.145) / 180) * dist, pPos.y + std::sin((angle * 3.145) / 180) * dist), tile))
+				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + std::cos((angle * 3.1459) / 180) * dist, pPos.y + std::sin((angle * 3.1459) / 180) * dist), tile))
 				{
 					no_intersect = false;
 					break;
@@ -1129,7 +1110,7 @@ void GameState_Play::sLight()
 
 		if (no_intersect)
 		{
-			Vec2 k = Vec2(std::cos((angle * 3.145) / 180) * dist, std::sin((angle * 3.145) / 180) * dist);
+			Vec2 k = Vec2(std::cos((angle * 3.1459) / 180) * dist, std::sin((angle * 3.1459) / 180) * dist);
 			intersetions.push_back(k);
 		}
 
@@ -1214,19 +1195,19 @@ void GameState_Play::sLight()
 					}
 				}
 			}
-			if (points[0] && pPos.dist(end_v1) <= dist )
+			if (points[0] && pPos.fastDist(end_v1) < d2 )
 			{
 				intersetions.push_back(end_v1 - pPos);
 			}
-			if (points[1] && pPos.dist(end_v2) <= dist )
+			if (points[1] && pPos.fastDist(end_v2) < d2 )
 			{
 				intersetions.push_back(end_v2 - pPos);
 			}
-			if (points[2] && pPos.dist(end_v3) <= dist )
+			if (points[2] && pPos.fastDist(end_v3) < d2 )
 			{
 				intersetions.push_back(end_v3 - pPos);
 			}
-			if (points[3] && pPos.dist(end_v4) <= dist )
+			if (points[3] && pPos.fastDist(end_v4) < d2 )
 			{
 				intersetions.push_back(end_v4 - pPos);
 			}
@@ -1238,30 +1219,28 @@ void GameState_Play::sLight()
 	std::sort(intersetions.begin(), intersetions.end());
 
 	sf::VertexArray TriangleFan(sf::TriangleFan, intersetions.size() + 2);
-	std::for_each(intersetions.begin(), intersetions.end(), [pPos](Vec2 & d) { d += pPos ;});
+	std::for_each(intersetions.begin(), intersetions.end(), [pPos](Vec2 & v) { v += pPos ;});
 
 	TriangleFan[0].position = sf::Vector2f(pPos.x, pPos.y);
 	TriangleFan[0].color = sf::Color(255, 255, 210, 255);
 
 	for (int i = 1; i < intersetions.size(); i += 1)
 	{
-		float point_to_player = 1 - pPos.dist(Vec2(intersetions[i].x, intersetions[i].y)) / m_player->getComponent<CLight>()->dist;
+		float point_to_player = 1 - pPos.dist(intersetions[i]) / m_player->getComponent<CLight>()->dist;
 		TriangleFan[i].position = sf::Vector2f(intersetions[i].x, intersetions[i].y);
 		TriangleFan[i].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
 	}
 
 	/** Connect the final points in TF **/
 
-	float point_to_player = 1 - pPos.dist(Vec2(intersetions[0].x, intersetions[0].y)) / m_player->getComponent<CLight>()->dist;
+	float point_to_player = 1 - pPos.dist(intersetions[0]) / m_player->getComponent<CLight>()->dist;
 	TriangleFan[intersetions.size()].position = sf::Vector2f(intersetions[0].x, intersetions[0].y);
 	TriangleFan[intersetions.size()].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
-	point_to_player = 1 - pPos.dist(Vec2(intersetions[1].x, intersetions[1].y)) / m_player->getComponent<CLight>()->dist;
+	point_to_player = 1 - pPos.dist(intersetions[1]) / m_player->getComponent<CLight>()->dist;
 	TriangleFan[intersetions.size() + 1].position = sf::Vector2f(intersetions[1].x, intersetions[1].y);
 	TriangleFan[intersetions.size() + 1].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
 	m_lightPoly.clear();
 	m_lightPoly = TriangleFan;
-
-
 
 }
 
