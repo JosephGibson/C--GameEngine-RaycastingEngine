@@ -1059,8 +1059,8 @@ void GameState_Play::sLight()
 		{
 			if (tile->getComponent<CTransform>()->pos.fastDist(playPos) < d2)
 			{
-				dx =  std::cos((angle * 3.1459) / 180) * dist;
-				dy =  std::sin((angle * 3.1459) / 180) * dist;
+				dx =  cosf((angle * 3.1459) / 180) * dist;
+				dy =  sinf((angle * 3.1459) / 180) * dist;
 				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + dx, pPos.y + dy), tile))
 				{
 					no_intersect = false;

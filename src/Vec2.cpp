@@ -112,8 +112,6 @@ Vec2 Vec2::abs() const
 
 float Vec2::clockwise_angle(const Vec2 & vec) const
 {
-    float angle = 0.0;
-    angle = atan2(vec.x, vec.y);
-    return angle;
+    return atan2f(vec.x, vec.y);
 }
 
