@@ -1305,7 +1305,6 @@ void GameState_Play::sUserInput()
 			case sf::Keyboard::S:       { pInput->down = true; break; }
 			case sf::Keyboard::D:       { pInput->right = true; break; }
 			case sf::Keyboard::Z:       { init(m_levelPath); break; }
-			case sf::Keyboard::F:       { m_drawCollision = !m_drawCollision; break; }
 			case sf::Keyboard::P:       { setPaused(!m_paused);  break; }
 			case sf::Keyboard::E:		{ useHealthKit(); break; }
 			case sf::Keyboard::Q:		{ m_player->getComponent<CInventory>()->meleeSelected = !m_player->getComponent<CInventory>()->meleeSelected; break; }
@@ -1393,63 +1392,6 @@ void GameState_Play::sRender()
 
 
 
-	// draw all Entity collision bounding boxes with a rectangleshape
-	if (m_drawCollision)
-	{
-		for (auto l : m_Light_Lines)
-		{
-			m_game.window().draw(l);
-		}
-
-		sf::CircleShape dot(4);
-		dot.setFillColor(sf::Color::Black);
-		for (auto e : m_entityManager.getEntities())
-		{
-			if (e->hasComponent<CBoundingBox>())
-			{
-				auto box = e->getComponent<CBoundingBox>();
-				auto transform = e->getComponent<CTransform>();
-				sf::RectangleShape rect;
-				rect.setSize(sf::Vector2f(box->size.x - 1, box->size.y - 1));
-				rect.setOrigin(sf::Vector2f(box->halfSize.x, box->halfSize.y));
-				rect.setPosition(transform->pos.x, m_game.window().getDefaultView().getSize().y - transform->pos.y);
-				rect.setFillColor(sf::Color(0, 0, 0, 0));
-
-				if (box->blockMove && box->blockVision) { rect.setOutlineColor(sf::Color::Black); }
-				if (box->blockMove && !box->blockVision) { rect.setOutlineColor(sf::Color::Blue); }
-				if (!box->blockMove && box->blockVision) { rect.setOutlineColor(sf::Color::Red); }
-				if (!box->blockMove && !box->blockVision) { rect.setOutlineColor(sf::Color::White); }
-				rect.setOutlineThickness(1);
-				m_game.window().draw(rect);
-			}
-
-			if (e->hasComponent<CPatrol>())
-			{
-				auto & patrol = e->getComponent<CPatrol>()->positions;
-				for (size_t p = 0; p < patrol.size(); p++)
-				{
-					dot.setPosition(patrol[p].x, patrol[p].y);
-					m_game.window().draw(dot);
-				}
-			}
-
-			if (e->hasComponent<CFollowPlayer>())
-			{
-				sf::VertexArray lines(sf::LinesStrip, 2);
-				lines[0].position.x = e->getComponent<CTransform>()->pos.x;
-				lines[0].position.y = m_game.window().getDefaultView().getSize().y - e->getComponent<CTransform>()->pos.y;
-				lines[0].color = sf::Color::Black;
-				lines[1].position.x = m_player->getComponent<CTransform>()->pos.x;
-				lines[1].position.y = m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y;
-				lines[1].color = sf::Color::Black;
-				m_game.window().draw(lines);
-				dot.setPosition(e->getComponent<CFollowPlayer>()->home.x, m_game.window().getDefaultView().getSize().y - e->getComponent<CFollowPlayer>()->home.y);
-				m_game.window().draw(dot);
-			}
-		}
-
-
-	}
 
 	m_background.setView(view);
 	m_background.draw(m_lightPoly);

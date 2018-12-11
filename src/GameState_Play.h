@@ -23,7 +23,6 @@ protected:
 	std::shared_ptr<Entity> 		m_player;
 	std::string						m_levelPath;
 	PlayerConfig					m_playerConfig;
-	bool							m_drawCollision = false;
 	bool                            m_canShoot = true;
 	sf::Clock 						m_shoot_timer;
 	int                             m_shoot_Max = 200;
