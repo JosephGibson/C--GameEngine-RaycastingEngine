@@ -1183,38 +1183,40 @@ void GameState_Play::sLight()
 
 				for (auto & intersect_tile : m_entityManager.getEntities("Tile"))
 				{
-					Vec2 intersect_origin = intersect_tile->getComponent<CTransform>()->pos;
-					intersect_origin.y = m_game.window().getDefaultView().getSize().y - intersect_origin.y;
-					Vec2 intersect_bb = intersect_tile->getComponent<CBoundingBox>()->halfSize;
+					if (intersect_tile->getComponent<CTransform>()->pos.dist(m_player->getComponent<CTransform>()->pos) <  m_player->getComponent<CLight>()->dist)
+					{
+						Vec2 intersect_origin = intersect_tile->getComponent<CTransform>()->pos;
+						intersect_origin.y = m_game.window().getDefaultView().getSize().y - intersect_origin.y;
+						Vec2 intersect_bb = intersect_tile->getComponent<CBoundingBox>()->halfSize;
 
-					Vec2 int_v1 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y - intersect_bb.y);
-					Vec2 int_v2 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y - intersect_bb.y);
-					Vec2 int_v3 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y + intersect_bb.y);
-					Vec2 int_v4 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y + intersect_bb.y);
+						Vec2 int_v1 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y - intersect_bb.y);
+						Vec2 int_v2 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y - intersect_bb.y);
+						Vec2 int_v3 = Vec2(intersect_origin.x + intersect_bb.x, intersect_origin.y + intersect_bb.y);
+						Vec2 int_v4 = Vec2(intersect_origin.x - intersect_bb.x, intersect_origin.y + intersect_bb.y);
 
-					if (Physics::LineIntersect(pPos, vert, int_v1, int_v2))
-					{
-						points[i] = false;
-						break;
-					}
-					else if (Physics::LineIntersect(pPos, vert, int_v2, int_v3))
-					{
-						points[i] = false;
-						break;
-					}
-					else if (Physics::LineIntersect(pPos, vert, int_v3, int_v4))
-					{
-						points[i] = false;
-						break;
-					}
-					else if (Physics::LineIntersect(pPos, vert, int_v4, int_v1))
-					{
-						points[i] = false;
-						break;
+						if (Physics::LineIntersect(pPos, vert, int_v1, int_v2))
+						{
+							points[i] = false;
+							break;
+						}
+						else if (Physics::LineIntersect(pPos, vert, int_v2, int_v3))
+						{
+							points[i] = false;
+							break;
+						}
+						else if (Physics::LineIntersect(pPos, vert, int_v3, int_v4))
+						{
+							points[i] = false;
+							break;
+						}
+						else if (Physics::LineIntersect(pPos, vert, int_v4, int_v1))
+						{
+							points[i] = false;
+							break;
+						}
 					}
 				}
 			}
-
 			/*	For every vert in a tile cast a point to the player. */
 
 			for (int j = 0; j < 4; j++)
