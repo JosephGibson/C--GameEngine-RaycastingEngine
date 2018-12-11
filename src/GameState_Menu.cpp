@@ -19,6 +19,8 @@ void GameState_Menu::init(const std::string & menuConfig)
 	m_levelPaths.push_back("level1.txt");
 	m_menuStrings.push_back("Level  2");
 	m_levelPaths.push_back("level2.txt");
+	m_menuStrings.push_back("Level  3");
+	m_levelPaths.push_back("level3.txt");
 	m_MenuMusic.setBuffer(m_game.getAssets().getSound("music_menu"));
 	m_MenuMusic.setLoop(true);
 	m_MenuMusic.play();

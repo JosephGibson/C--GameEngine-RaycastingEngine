@@ -1,6 +1,7 @@
 Tile rust_1 0 1 1 1
 Tile rust_1 1 1 1 1
 Tile rust_3 2 2 1 1
-Move_Tile rust_4 4 2 4 5 1 1 1
-Move_Tile rust_4 6 8 6 5 1 1 1
+Move_Tile concrete_5 4 2 4 5 1 1 1
+Move_Tile concrete_5 6 8 6 5 1 1 1
+Move_Tile concrete_5 8 2 8 5 1 1 1
 Player 0 2 30 64 5 0.25 8

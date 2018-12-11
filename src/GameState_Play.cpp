@@ -292,7 +292,7 @@ void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity) // add check fo
  * @param[in]  entity  The sword a given entity.
  */
 
-void GameState_Play::spawnMeele(std::shared_ptr<Entity> entity) 
+void GameState_Play::spawnMeele(std::shared_ptr<Entity> entity)
 {
 	m_playerAttackSound.setBuffer(m_game.getAssets().getSound("pipe_swing"));
 	m_playerAttackSound.play();
@@ -361,7 +361,7 @@ void GameState_Play::sMovement()
 		}
 	}
 
-	/** Move the moving tiles **/ 
+	/** Move the moving tiles **/
 	for (auto &  tile : m_entityManager.getEntities("Tile"))
 	{
 		if (tile->hasComponent<CMoveTile>())
@@ -439,7 +439,7 @@ void GameState_Play::sMovement()
 		speed.x = 0;
 	}
 
-	/** Jumping control bloclk.  **/ 
+	/** Jumping control bloclk.  **/
 	if (!m_player->getComponent<CState>()->grounded)
 	{
 		speed.y -= m_player->getComponent<CGravity>()->gravity;
@@ -717,7 +717,7 @@ void GameState_Play::sHealth()
 {
 	if (m_player->getComponent<CHealth>()->hp <= 0 || m_player->getComponent<CTransform>()->pos.y < -1000)
 	{
-		m_game.popState(); 
+		m_game.popState();
 	}
 
 	for (auto & npc : m_entityManager.getEntities("NPC"))
@@ -846,38 +846,39 @@ void GameState_Play::sCollision()
 		/** check for Meele cols **/
 		for (auto & meele : m_entityManager.getEntities("meele"))
 		{
-			if (meele->hasComponent<CBoundingBox>()){
-			Vec2 overLap = Physics::GetOverlap(npc, meele);
-
-			if (overLap.x >= 0 && overLap.y >= 0)
+			if (meele->hasComponent<CBoundingBox>())
 			{
+				Vec2 overLap = Physics::GetOverlap(npc, meele);
 
-				Vec2 prevOverLap = Physics::GetPreviousOverlap(npc, meele);
-				if (npc->getComponent<CTransform>()->prevPos.x < meele->getComponent<CTransform>()->pos.x)
+				if (overLap.x >= 0 && overLap.y >= 0)
 				{
-					npc->getComponent<CTransform>()->pos.x -= 25;
-				}
-				else
-				{
-					npc->getComponent<CTransform>()->pos.x +=  25;
-				}
 
-				if (npc->hasComponent<CSteer>())
-				{
-					npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
-				}
+					Vec2 prevOverLap = Physics::GetPreviousOverlap(npc, meele);
+					if (npc->getComponent<CTransform>()->prevPos.x < meele->getComponent<CTransform>()->pos.x)
+					{
+						npc->getComponent<CTransform>()->pos.x -= 25;
+					}
+					else
+					{
+						npc->getComponent<CTransform>()->pos.x +=  25;
+					}
 
-				m_hitSound.setBuffer(m_game.getAssets().getSound("pipe_hit"));
-				m_hitSound.play();
-				auto damge = m_entityManager.addEntity("effect");
-				damge->addComponent<CTransform>();
-				damge->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
-				damge->addComponent<CAnimation>(m_game.getAssets().getAnimation("blood"), false);
-				npc->getComponent<CHealth>()->hp -= meele->getComponent<CDamage>()->dmg;;
-				meele->addComponent<CDamage>(0);
-				meele->removeComponent<CBoundingBox>();
+					if (npc->hasComponent<CSteer>())
+					{
+						npc->getComponent<CSteer>()->vel = Vec2(0.1, 0.1);
+					}
+
+					m_hitSound.setBuffer(m_game.getAssets().getSound("pipe_hit"));
+					m_hitSound.play();
+					auto damge = m_entityManager.addEntity("effect");
+					damge->addComponent<CTransform>();
+					damge->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
+					damge->addComponent<CAnimation>(m_game.getAssets().getAnimation("blood"), false);
+					npc->getComponent<CHealth>()->hp -= meele->getComponent<CDamage>()->dmg;;
+					meele->addComponent<CDamage>(0);
+					meele->removeComponent<CBoundingBox>();
+				}
 			}
-		}
 		}
 
 		/** Check foor NPC player cols**/
@@ -1105,25 +1106,30 @@ void GameState_Play::sLight()
 
 	/*Cast a ray every 5 degree from player, remove if intersect. */
 	Vec2 pPos = m_player->getComponent<CTransform>()->pos;
-	pPos.y = 768 - pPos.y;
+	pPos.y = m_game.window().getDefaultView().getSize().y - pPos.y;
 	float dist = m_player->getComponent<CLight>()->dist;
 
 	for (int angle = 0; angle < 360; angle += 5)
 	{
 
-		auto dx = std::cos( (angle * M_PI ) / 180);
-		auto dy = std::sin( (angle * M_PI ) / 180);
+		auto dx = std::cos( (angle * 3.1456 ) / 180);
+		auto dy = std::sin( (angle * 3.1456 ) / 180);
 		sf::VertexArray lines(sf::LinesStrip, 2);
 
 		bool no_intersect = true;
 
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
-			if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + dx * m_player->getComponent<CLight>()->dist, pPos.y + dy * m_player->getComponent<CLight>()->dist), tile))
+			//std::cout << pPos.dist(tile->getComponent<CTransform>()->pos) << std::endl;
+			if (tile->getComponent<CTransform>()->pos.dist(pPos) <  m_player->getComponent<CLight>()->dist*2 + 64)
 			{
-				no_intersect = false;
-				break;
+				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + dx * m_player->getComponent<CLight>()->dist, pPos.y + dy * m_player->getComponent<CLight>()->dist), tile))
+				{
+					no_intersect = false;
+					break;
+				}
 			}
+
 		}
 
 		if (no_intersect)
@@ -1140,10 +1146,10 @@ void GameState_Play::sLight()
 	}
 
 	/*	For every vert in a tile cast a point to the player. */
-	/*	Assume not intersection, correct if not.             */ 
+	/*	Assume not intersection, correct if not.             */
 	for (auto & end_tile : m_entityManager.getEntities("Tile"))
 	{
-		if (end_tile->hasComponent<CBoundingBox>() && end_tile->getComponent<CBoundingBox>()->blockVision)
+		if (end_tile->getComponent<CTransform>()->pos.dist(pPos) <  m_player->getComponent<CLight>()->dist*2 + 64)
 		{
 			std::vector<bool> points(4);
 			points[0] = true;
@@ -1273,6 +1279,7 @@ void GameState_Play::sLight()
 					}
 				}
 			}
+
 		}
 	}
 
