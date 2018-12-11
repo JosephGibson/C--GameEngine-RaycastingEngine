@@ -1106,7 +1106,7 @@ void GameState_Play::sLight()
 
 	/*Cast a ray every 5 degree from player, remove if intersect. */
 	Vec2 pPos = m_player->getComponent<CTransform>()->pos;
-	pPos.y = m_game.window().getDefaultView().getSize().y - pPos.y;
+	pPos.y = m_game.window().getDefaultView().getSize().y  - pPos.y;
 	float dist = m_player->getComponent<CLight>()->dist;
 
 	for (int angle = 0; angle < 360; angle += 5)
@@ -1120,8 +1120,10 @@ void GameState_Play::sLight()
 
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
-			//std::cout << pPos.dist(tile->getComponent<CTransform>()->pos) << std::endl;
-			if (tile->getComponent<CTransform>()->pos.dist(pPos) <  m_player->getComponent<CLight>()->dist*2 + 64)
+			// std::cout << pPos.x << "  p " << pPos.y << std::endl;
+			// std::cout << tile->getComponent<CTransform>()->pos.x << " t " << tile->getComponent<CTransform>()->pos.y << std::endl;
+			// std::cout << tile->getComponent<CTransform>()->pos.dist(m_player->getComponent<CTransform>()->pos) << std::endl;
+			if (tile->getComponent<CTransform>()->pos.dist(m_player->getComponent<CTransform>()->pos) <  m_player->getComponent<CLight>()->dist)
 			{
 				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + dx * m_player->getComponent<CLight>()->dist, pPos.y + dy * m_player->getComponent<CLight>()->dist), tile))
 				{
@@ -1149,7 +1151,7 @@ void GameState_Play::sLight()
 	/*	Assume not intersection, correct if not.             */
 	for (auto & end_tile : m_entityManager.getEntities("Tile"))
 	{
-		if (end_tile->getComponent<CTransform>()->pos.dist(pPos) <  m_player->getComponent<CLight>()->dist*2 + 64)
+		if (end_tile->getComponent<CTransform>()->pos.dist(m_player->getComponent<CTransform>()->pos) <  m_player->getComponent<CLight>()->dist)
 		{
 			std::vector<bool> points(4);
 			points[0] = true;
@@ -1157,9 +1159,6 @@ void GameState_Play::sLight()
 			points[2] = true;
 			points[3] = true;
 
-
-			Vec2 pPos = m_player->getComponent<CTransform>()->pos;
-			pPos.y = m_game.window().getDefaultView().getSize().y - pPos.y;
 
 			Vec2 end_origin = end_tile->getComponent<CTransform>()->pos;
 			end_origin.y = m_game.window().getDefaultView().getSize().y - end_origin.y;
