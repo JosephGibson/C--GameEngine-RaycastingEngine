@@ -1258,7 +1258,7 @@ void GameState_Play::sLight()
 
 	for (int i = 1; i < intersetions.size(); i += 1)
 	{
-	//	float point_to_player = 1 - pPos.dist(Vec2(intersetions[i].x, intersetions[i].y)) / m_player->getComponent<CLight>()->dist;
+		float point_to_player = 1 - pPos.dist(Vec2(intersetions[i].x, intersetions[i].y)) / m_player->getComponent<CLight>()->dist;
 		float point_to_player = 55;
 		TriangleFan[i].position = sf::Vector2f(intersetions[i].x, intersetions[i].y);
 		TriangleFan[i].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
@@ -1266,11 +1266,10 @@ void GameState_Play::sLight()
 
 	/** Connect the final points in TF **/
 
-	//float point_to_player = 1 - pPos.dist(Vec2(intersetions[0].x, intersetions[0].y)) / m_player->getComponent<CLight>()->dist;
-	float point_to_player = 55;
+	float point_to_player = 1 - pPos.dist(Vec2(intersetions[0].x, intersetions[0].y)) / m_player->getComponent<CLight>()->dist;
 	TriangleFan[intersetions.size()].position = sf::Vector2f(intersetions[0].x, intersetions[0].y);
 	TriangleFan[intersetions.size()].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
-	//point_to_player = 1 - pPos.dist(Vec2(intersetions[1].x, intersetions[1].y)) / m_player->getComponent<CLight>()->dist;
+	point_to_player = 1 - pPos.dist(Vec2(intersetions[1].x, intersetions[1].y)) / m_player->getComponent<CLight>()->dist;
 	TriangleFan[intersetions.size() + 1].position = sf::Vector2f(intersetions[1].x, intersetions[1].y);
 	TriangleFan[intersetions.size() + 1].color = sf::Color(255 * point_to_player, 255 * point_to_player, 210 * point_to_player, 255 * point_to_player);
 	m_lightPoly.clear();
