@@ -32,4 +32,5 @@ public:
     float length() const;
 
     float dist(const Vec2 & rhs) const;
+    float fastDist(const Vec2 & rhs) const;
 };

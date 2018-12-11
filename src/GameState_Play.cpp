@@ -1108,8 +1108,8 @@ void GameState_Play::sLight()
 	Vec2 pPos = m_player->getComponent<CTransform>()->pos;
 	pPos.y = m_game.window().getDefaultView().getSize().y  - pPos.y;
 	float dist = m_player->getComponent<CLight>()->dist;
+	float d2 = dist * dist;
 
-	
 	for (int angle = 0; angle < 360; angle += 18)
 	{
 
@@ -1117,7 +1117,7 @@ void GameState_Play::sLight()
 
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
-			if (tile->getComponent<CTransform>()->pos.dist(playPos) <  dist)
+			if (tile->getComponent<CTransform>()->pos.fastDist(playPos) <  d2)
 			{
 				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + std::cos((angle * 3.145) / 180) * dist, pPos.y + std::sin((angle * 3.145) / 180) * dist), tile))
 				{
@@ -1134,13 +1134,13 @@ void GameState_Play::sLight()
 		}
 
 	}
-	
+
 
 	/*	For every vert in a tile cast a point to the player. */
 	/*	Assume not intersection, correct if not.             */
 	for (auto & end_tile : m_entityManager.getEntities("Tile"))
 	{
-		if (end_tile->getComponent<CTransform>()->pos.dist(playPos) <  dist)
+		if (end_tile->getComponent<CTransform>()->pos.fastDist(playPos) <  d2)
 		{
 			std::vector<bool> points(4);
 			points[0] = true;
@@ -1180,7 +1180,7 @@ void GameState_Play::sLight()
 
 				for (auto & intersect_tile : m_entityManager.getEntities("Tile"))
 				{
-					if (intersect_tile->getComponent<CTransform>()->pos.dist(playPos) <  m_player->getComponent<CLight>()->dist)
+					if (intersect_tile->getComponent<CTransform>()->pos.fastDist(playPos) <  d2)
 					{
 						Vec2 intersect_origin = intersect_tile->getComponent<CTransform>()->pos;
 						intersect_origin.y = m_game.window().getDefaultView().getSize().y - intersect_origin.y;
@@ -1214,35 +1214,22 @@ void GameState_Play::sLight()
 					}
 				}
 			}
-			/*	For every vert in a tile cast a point to the player. */
-
-			for (int j = 0; j < 4; j++)
+			if (points[0] && pPos.dist(end_v1) <= dist )
 			{
-				if (points[j])
-				{
-					Vec2 vert;
-					switch (j)
-					{
-					case 0:
-						vert = end_v1;
-						break;
-					case 1:
-						vert = end_v2;
-						break;
-					case 2:
-						vert = end_v3;
-						break;
-					case 3:
-						vert = end_v4;
-						break;
-					}
-					if (pPos.dist(vert) <= dist )
-					{
-						intersetions.push_back(vert - pPos);
-					}
-				}
+				intersetions.push_back(end_v1 - pPos);
 			}
-
+			if (points[1] && pPos.dist(end_v2) <= dist )
+			{
+				intersetions.push_back(end_v2 - pPos);
+			}
+			if (points[2] && pPos.dist(end_v3) <= dist )
+			{
+				intersetions.push_back(end_v3 - pPos);
+			}
+			if (points[3] && pPos.dist(end_v4) <= dist )
+			{
+				intersetions.push_back(end_v4 - pPos);
+			}
 		}
 	}
 
@@ -1251,7 +1238,7 @@ void GameState_Play::sLight()
 	std::sort(intersetions.begin(), intersetions.end());
 
 	sf::VertexArray TriangleFan(sf::TriangleFan, intersetions.size() + 2);
-	std::for_each(intersetions.begin(), intersetions.end(), [pPos](Vec2 & d) { d+= pPos ;});
+	std::for_each(intersetions.begin(), intersetions.end(), [pPos](Vec2 & d) { d += pPos ;});
 
 	TriangleFan[0].position = sf::Vector2f(pPos.x, pPos.y);
 	TriangleFan[0].color = sf::Color(255, 255, 210, 255);
