@@ -1112,17 +1112,14 @@ void GameState_Play::sLight()
 	for (int angle = 0; angle < 360; angle += 5)
 	{
 
-		auto dx = std::cos( (angle * 3.1456 ) / 180);
-		auto dy = std::sin( (angle * 3.1456 ) / 180);
+		float dx = std::cos( (angle * 3.1456 ) / 180);
+		float dy = std::sin( (angle * 3.1456 ) / 180);
 		sf::VertexArray lines(sf::LinesStrip, 2);
 
 		bool no_intersect = true;
 
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
-			// std::cout << pPos.x << "  p " << pPos.y << std::endl;
-			// std::cout << tile->getComponent<CTransform>()->pos.x << " t " << tile->getComponent<CTransform>()->pos.y << std::endl;
-			// std::cout << tile->getComponent<CTransform>()->pos.dist(m_player->getComponent<CTransform>()->pos) << std::endl;
 			if (tile->getComponent<CTransform>()->pos.dist(m_player->getComponent<CTransform>()->pos) <  m_player->getComponent<CLight>()->dist)
 			{
 				if (Physics::LightEntityIntersect(pPos, Vec2(pPos.x + dx * m_player->getComponent<CLight>()->dist, pPos.y + dy * m_player->getComponent<CLight>()->dist), tile))
@@ -1136,13 +1133,8 @@ void GameState_Play::sLight()
 
 		if (no_intersect)
 		{
-			lines[0].position.x = pPos.x;
-			lines[0].position.y = pPos.y;
-			lines[1].position.x = pPos.x + dx * m_player->getComponent<CLight>()->dist;
-			lines[1].position.y = pPos.y + dy * m_player->getComponent<CLight>()->dist;
 			Vec2 k = Vec2(dx * m_player->getComponent<CLight>()->dist, dy * m_player->getComponent<CLight>()->dist);
 			intersetions.push_back(k);
-			m_Light_Lines.push_back(lines);
 		}
 
 	}
@@ -1247,34 +1239,8 @@ void GameState_Play::sLight()
 					}
 					if (pPos.dist(vert) <= dist )
 					{
-						sf::VertexArray lines(sf::LinesStrip, 2);
-						lines[0].position.x = m_player->getComponent<CTransform>()->pos.x;
-						lines[0].position.y = m_game.window().getDefaultView().getSize().y - m_player->getComponent<CTransform>()->pos.y;
-						lines[1].position.x = vert.x;
-						lines[1].position.y = vert.y;
-						if (j == 0)
-						{
-							lines[0].color = sf::Color::Red;
-							lines[1].color = sf::Color::Red;
-						}
-						else if (j == 1)
-						{
-							lines[0].color = sf::Color::Blue;
-							lines[1].color = sf::Color::Blue;
-						}
-						else if (j == 2)
-						{
-							lines[0].color = sf::Color::Green;
-							lines[1].color = sf::Color::Green;
-						}
-						else if (j == 3)
-						{
-							lines[0].color = sf::Color::Black;
-							lines[1].color = sf::Color::Black;
-						}
 						Vec2 p = vert - pPos;
 						intersetions.push_back(p);
-						m_Light_Lines.push_back(lines);
 					}
 				}
 			}
