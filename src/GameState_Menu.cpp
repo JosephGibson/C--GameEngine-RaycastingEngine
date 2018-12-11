@@ -27,13 +27,16 @@ void GameState_Menu::init(const std::string & menuConfig)
 void GameState_Menu::update()
 {
 	m_entityManager.update();
-
 	sUserInput();
 	sRender();
 }
 
 void GameState_Menu::sUserInput()
 {
+	if( m_MenuMusic.getStatus()  != sf::Sound::Status::Playing)
+	{
+		m_MenuMusic.play();
+	}
 	sf::Event event;
 	while (m_game.window().pollEvent(event))
 	{

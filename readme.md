@@ -18,21 +18,25 @@
 - There are **no rooms**, only tiles.
 - A background image may be specifed.
 - TilesX/Y, gravity, speed can be *floats*.
-- **Example:**
+- **Example:** (out of date update later)
 - Tile ANIMATION_NAME TileX TileY Blocks_Movement Blocks_Vison
 - Player TileX TileY ColBox_X ColBox_Y Speed Gravity JumpSpeed
 - NPC ANIMATION_NAME TileX TileY Blocks_Movement Blocks_Vison Gravity AI_Type
 
 
-#### Additional components:
+####  Whats Done:
+- Moving Tiles implemented. (Only works vertically!)
+- Sound, and sound systems implemented.
+- Steer implemented (See "eye".)
+- Ray-Casting (Light duh.)
+- Gravity and acceleration. 
+- A "Goal" objective (its a purple portal)
+- Weapons
+- Power ups.
+- Combat system
 
-- NPC Behaviours: patrol, follow, hang (for spiders), boss
-- Hang is the behaviour of "Spider" NPC's where they will drop down from the celling if the player is under them and then they will follow / attack the player.
-- cLight => *To-do*  Should handle all light.
-
-
-#### NPC's 
-
-- Some Boss // TO-DO
-- The t wo NPCs I think we could add would be the spider and zombies.
-- Each NPC should have a interesting behaviour if the are caught in light. 
+####  TO-DO:
+- Code clean up
+- Level 2 50% done
+- Level 3 
+- Write up.

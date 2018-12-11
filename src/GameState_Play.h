@@ -32,7 +32,7 @@ protected:
 	std::vector<sf::VertexArray>	m_Light_Lines;
 	sf::RenderTexture				m_background;
 	sf::VertexArray					m_lightPoly;
-	
+	sf::Sound						m_pickUpSound;
 	sf::Sound						m_hitSound;
 	sf::Sound						m_hurtSound;
 	sf::Sound						m_deathSound;
