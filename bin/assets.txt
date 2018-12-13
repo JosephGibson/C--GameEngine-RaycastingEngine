@@ -14,6 +14,7 @@ Texture		tex_spider_run		images/npc/spider_run.png
 Texture		tex_boss		images/npc/boss.png
 Texture		tex_pipe		images/player/pipe.png
 Texture		tex_bullet		images/player/bullet.png
+Texture		tex_acid		images/npc/acid.png
 Texture		tex_player_shoot		images/player/player_shoot.png
 Texture		tex_player_whack		images/player/player_whack.png
 Texture		tex_eye			images/npc/eye.png
@@ -44,7 +45,8 @@ Animation		player_stand		tex_player_stand		1		0
 Animation		player_run		tex_player_run		4		10
 Animation		player_jump		tex_player_jump		1		0
 Animation		spider		tex_spider_run		3		5
-Animation		boss		tex_boss		4		10
+Animation		acid		tex_acid		6		7
+Animation		boss		tex_boss		4		6
 Animation		goal		text_goal		4		5
 Sound		music_1		sounds/music_1.wav
 Sound		music_menu		sounds/menu_music.wav
@@ -61,6 +63,7 @@ Sound		spider		sounds/spider.wav
 Sound		death		sounds/death.wav
 Sound		pipe_hit		sounds/pipe_hit.wav
 Sound		health_pack		sounds/health_pack.wav
+Sound		acid		sounds/acid.wav
 Sound		eye			sounds/eye.wav
 Font		Arial			fonts/arial.ttf
 Font		titleFont			fonts/titleFont.ttf

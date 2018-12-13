@@ -171,3 +171,12 @@ public:
 	Vec2 vel = Vec2 { 0, 0 };
 	CSteer(float spd, float scale) : scale(scale), speed(spd) {};
 }; 
+
+class CBoss : public Component
+{
+public:
+	Vec2 home = Vec2{0,0};
+	float speed = 0;
+	sf::Clock timer;
+	CBoss(float spd, Vec2 hm) : speed(spd), home(hm) {};
+}; 

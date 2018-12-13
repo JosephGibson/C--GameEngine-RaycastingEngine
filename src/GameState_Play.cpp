@@ -167,6 +167,11 @@ void GameState_Play::loadLevel(const std::string & filename)
 				file >> speed >> scale;
 				e->addComponent<CSteer>(speed, scale);
 			}
+			else if ( aiName == "Boss")
+			{
+				file >> speed;
+				e->addComponent<CBoss>(speed, e->getComponent<CTransform>()->pos);
+			}
 		}
 	}
 
@@ -548,7 +553,6 @@ void GameState_Play::sAI()
 			/* Check if the NPCS is close that a movement would push them too far. */
 			else if (npc->getComponent<CTransform>()->pos.dist(npc->getComponent<CFollowPlayer>()->home) >= npc->getComponent<CFollowPlayer>()->speed * 1.15)
 			{
-				//	m_hurtSound.stop();
 				Vec2 Norm = (npc->getComponent<CFollowPlayer>()->home - npc->getComponent<CTransform>()->pos).norm();
 				Norm *= npc->getComponent<CFollowPlayer>()->speed;
 				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
@@ -560,10 +564,101 @@ void GameState_Play::sAI()
 					npc->getComponent<CTransform>()->speed.x = Norm.x;
 				}
 			}
-			/* Else, the player is now home. */
+			/* Else, the NPC is now home. */
 			else
 			{
 				npc->getComponent<CTransform>()->pos = npc->getComponent<CFollowPlayer>()->home;
+			}
+
+		}
+
+		if (npc->hasComponent<CBoss>())
+		{
+			/* Use bool can see to keep track if any block breaks LOS */
+			bool can_see = true;
+
+			/* Check for tile line intersetions. */
+			for (auto & tile : m_entityManager.getEntities("Tile"))
+			{
+				/* Check tile for appropriate components */
+				if (tile->hasComponent<CBoundingBox>() && tile->getComponent<CBoundingBox>()->blockVision)
+				{
+					if (Physics::EntityIntersect(npc->getComponent<CTransform>()->pos, m_player->getComponent<CTransform>()->pos, tile))
+					{
+						can_see = false;
+					}
+				}
+			}
+			/* If vision, chase the player. */
+			if (can_see)
+			{
+				if (m_hurtSound.getStatus() != sf::Sound::Status::Playing)
+				{
+					std::string animationName = npc->getComponent<CAnimation>()->animation.getName();
+					m_hurtSound.setBuffer(m_game.getAssets().getSound(animationName));
+					m_hurtSound.play();
+
+				}
+
+				Vec2 Norm = (m_player->getComponent<CTransform>()->pos - npc->getComponent<CTransform>()->pos).norm();
+				Norm *= npc->getComponent<CBoss>()->speed;
+				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+				{
+
+					npc->getComponent<CTransform>()->speed = Norm;
+				}
+				else
+				{
+					npc->getComponent<CTransform>()->speed.x = Norm.x;
+				}
+				if (Norm.x < 0)
+				{
+					npc->getComponent<CTransform>()->scale.x = 1;
+				}
+				else
+				{
+					npc->getComponent<CTransform>()->scale.x = -1;
+				}
+
+
+				//			std::cout << npc->getComponent<CBoss>()->timer.getElapsedTime().asMilliseconds() << std::endl;
+				if (npc->getComponent<CBoss>()->timer.getElapsedTime().asMilliseconds() > 2000)
+				{
+					auto goon  = m_entityManager.addEntity("NPC");
+					goon->addComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
+					goon->addComponent<CAnimation>(m_game.getAssets().getAnimation("acid"), true);
+					goon->addComponent<CBoundingBox>(goon->getComponent<CAnimation>()->animation.getSize()*0.75, 1, 1);
+					goon->addComponent<CDamage>(10);
+					goon->addComponent<CHealth>(1);
+					goon->addComponent<CGravity>(0, 1);
+					goon->addComponent<CState>("acidshot");
+					goon->addComponent<CFollowPlayer>(Vec2(0,0), 4);
+					goon->addComponent<CLifeSpan>(2500);
+					npc->getComponent<CBoss>()->timer.restart();
+				}
+
+
+
+			}
+			/* Check if the NPCS is close that a movement would push them too far. */
+			else if (npc->getComponent<CTransform>()->pos.dist(npc->getComponent<CBoss>()->home) >= npc->getComponent<CBoss>()->speed * 1.15)
+			{
+				Vec2 Norm = (npc->getComponent<CBoss>()->home - npc->getComponent<CTransform>()->pos).norm();
+				Norm *= npc->getComponent<CBoss>()->speed;
+				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+				{
+					npc->getComponent<CTransform>()->speed = Norm;
+				}
+				else
+				{
+					npc->getComponent<CTransform>()->speed.x = Norm.x;
+				}
+			}
+			/* Else, the NPC is now home. */
+			else
+			{
+				npc->getComponent<CBoss>()->timer.restart();
+				npc->getComponent<CTransform>()->pos = npc->getComponent<CBoss>()->home;
 			}
 
 		}
@@ -689,11 +784,44 @@ void GameState_Play::sCollision()
 
 	bool player_grounded = false;
 
+
+
+
+
+
+
+
+
 	/** Check for NPC cols**/
 	for (auto & npc : m_entityManager.getEntities("NPC"))
 	{
 
 		bool NPC_Grounded = false;
+
+
+		if (npc->getComponent<CState>()->state == "acidshot")
+
+		{
+			for (auto & meele	 : m_entityManager.getEntities("meele"))
+			{
+				if (meele->hasComponent<CBoundingBox>())
+				{
+					Vec2 overLap = Physics::GetOverlap(npc, meele);
+
+					if (overLap.x >= 0 && overLap.y >= 0)
+					{
+						npc->getComponent<CHealth>()->hp -= meele->getComponent<CDamage>()->dmg;
+						m_hitSound.setBuffer(m_game.getAssets().getSound("pipe_hit"));
+						m_hitSound.play();
+
+					}
+				}
+			}
+
+
+
+		}
+
 
 		for (auto & tile : m_entityManager.getEntities("Tile"))
 		{
@@ -869,6 +997,12 @@ void GameState_Play::sCollision()
 					m_player->getComponent<CTransform>()->pos.y += overLap.y + 25;
 				}
 			}
+
+			if (npc->getComponent<CState>()->state == "acidshot")
+			{
+				npc->getComponent<CHealth>()->hp -= 99;
+			}
+
 			m_player->getComponent<CHealth>()->hp -= npc->getComponent<CDamage>()->dmg;
 			m_playerSound.setBuffer(m_game.getAssets().getSound("player_hurt"));
 			m_playerSound.play();
