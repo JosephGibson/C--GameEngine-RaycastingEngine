@@ -504,6 +504,15 @@ void GameState_Play::sAI()
 
 		if (npc->hasComponent<CFollowPlayer>())
 		{
+			if (npc->getComponent<CTransform>()->pos.fastDist(m_player->getComponent<CTransform>()->pos) < 1000000 )
+			{
+
+
+
+
+
+
+
 			/* Use bool can see to keep track if any block breaks LOS */
 			bool can_see = true;
 
@@ -568,6 +577,15 @@ void GameState_Play::sAI()
 			else
 			{
 				npc->getComponent<CTransform>()->pos = npc->getComponent<CFollowPlayer>()->home;
+			}
+
+
+
+
+
+
+
+
 			}
 
 		}
@@ -1419,7 +1437,7 @@ void GameState_Play::sUserInput()\
 void GameState_Play::sRender()
 {
 	m_game.window().clear(sf::Color(185, 175, 175));
-	m_background.clear(sf::Color(23, 23, 23));
+	m_background.clear(sf::Color(18, 18, 18));
 	sf::View view(m_game.window().getDefaultView());
 
 	/* use center of view to position hp and item counts/selection */

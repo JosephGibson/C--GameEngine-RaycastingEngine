@@ -88,10 +88,52 @@ Tile rust_2 24 17 1 1
 Tile rust_3 25 17 1 1
 Tile rust_4 26 17 1 1
 Tile rust_2 27 17 1 1
+Tile concrete_5 31 17 1 1
+Tile concrete_5 32 17 1 1
+Tile concrete_5 33 17 1 1
+Tile concrete_5 34 17 1 1
+Tile concrete_5 35 17 1 1
+Tile concrete_5 36 17 1 1
+Tile concrete_5 37 17 1 1
+Tile concrete_5 38 17 1 1
+Tile concrete_5 39 17 1 1
+Tile concrete_5 40 17 1 1
+Tile concrete_5 41 17 1 1
+Tile concrete_5 42 17 1 1
+Tile concrete_5 43 17 1 1
+Tile concrete_5 44 17 1 1
+Tile concrete_5 45 17 1 1
+Tile concrete_5 46 17 1 1
+Tile concrete_1 47 16 1 1
+Tile concrete_2 48 16 1 1
+Tile concrete_1 49 16 1 1
+Tile concrete_2 50 16 1 1
+Tile concrete_1 51 16 1 1
+Tile concrete_2 52 16 1 1
+Tile rust_2 53 16 1 1
+Tile rust_3 54 16 1 1
+Tile rust_2 55 16 1 1
+Tile rust_3 56 16 1 1
+Tile rust_2 57 16 1 1
+Tile rust_3 58 16 1 1
+Tile rust_2 58 16 1 1
+Tile rust_3 59 16 1 1
+Tile rust_2 60 16 1 1
+Tile rust_2 61 16 1 1
+Tile rust_2 62 16 1 1
+Tile rust_2 63 16 1 1
+Tile concrete_5 63 17 1 1
+Tile concrete_5 63 18 1 1
+Tile concrete_5 63 19 1 1
+Tile concrete_5 63 20 1 1
+Tile concrete_5 63 21 1 1
+Tile concrete_5 63 22 1 1
+Goal 60 18
 Item health_pack 5 2 3
-Goal 13 19.5
-Move_Tile concrete_3 29 13 29 18.5 2 1 1
+Item ammo_pack 15 19 3
+Move_Tile concrete_3 29 13 29 18.5 1.5 1 1
 NPC eye 25 16 1 1 7 0.7 0.7 100 30 Steer 5 0.03
 NPC spider 25 1 1 1 5 0.85 0.85 100 40 Follow 4
-NPC boss 16 19 1 1 5 0.85 0.85 100 40 Boss 3.5
-Player 0 2 30 64 5 0.25 8
+NPC spider 58 18 1 1 5 0.85 0.85 100 40 Follow 3.5
+NPC eye 19 19 1 1 7 0.7 0.7 100 30 Steer 4.5 0.03
+Player 0 2 30 64 5 0.35 10

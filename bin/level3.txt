@@ -88,8 +88,9 @@ Tile rust_2 24 17 1 1
 Tile rust_3 25 17 1 1
 Tile rust_4 26 17 1 1
 Tile rust_2 27 17 1 1
+Tile concrete_5 32 17 1 1
 Item health_pack 5 2 3
 Goal 13 19.5
 Move_Tile concrete_3 29 13 29 18.5 2 1 1
 NPC boss 17 1 1 1 5 0.75 0.75 500 65 Boss 2
-Player 0 2 30 64 5 0.25 8
+Player 0 2 30 64 5 0.45 11

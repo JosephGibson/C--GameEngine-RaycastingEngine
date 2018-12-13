@@ -1,7 +1,20 @@
+Tile rust_1 -4 1 1 1
+Tile rust_1 -3 1 1 1
+Tile rust_1 -2 1 1 1
+Tile rust_1 -1 1 1 1
 Tile rust_1 0 1 1 1
 Tile rust_1 1 1 1 1
 Tile rust_3 2 2 1 1
 Move_Tile concrete_5 4 2 4 5 1 1 1
-Move_Tile concrete_5 6 8 6 5 1 1 1
-Move_Tile concrete_5 8 2 8 5 1 1 1
-Player 0 2 30 64 5 0.25 8
+Move_Tile concrete_5 7 8 7 2 2 1 1
+Move_Tile concrete_5 10 2 10 5 1 1 1
+Tile rust_3 13 3 1 1
+Tile rust_3 14 3 1 1
+Tile rust_3 15 3 1 1
+Tile rust_3 16 3 1 1
+Tile rust_3 17 3 1 1
+Tile rust_3 18 3 1 1
+Tile rust_3 19 3 1 1
+Tile rust_3 20 3 1 1
+Item ammo_pack -1 2 10
+Player -3 2 30 64 5 0.35 10
