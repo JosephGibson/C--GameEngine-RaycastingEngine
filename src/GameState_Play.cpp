@@ -128,9 +128,9 @@ void GameState_Play::loadLevel(const std::string & filename)
 		{
 
 			std::string name, aiName;
-			int BM, BV, HP, KnockBack;
+			int BM, BV, HP, KnockBack, dmg;
 			float TY, TX, grav, speed, BoundingX, BoundingY;
-			file >> name >> TX >> TY >> BM >> BV >> grav >> BoundingX >> BoundingY >> HP >> KnockBack >> aiName;
+			file >> name >> TX >> TY >> BM >> BV >> grav >> BoundingX >> BoundingY >> HP >> dmg >> KnockBack >> aiName;
 			auto e = m_entityManager.addEntity(token);
 			e->addComponent<CAnimation>(m_game.getAssets().getAnimation(name), true);
 			e->addComponent<CTransform>()->pos = Vec2((TX * 64) + e->getComponent<CAnimation>()->animation.getSize().x / 2, TY * 64 + e->getComponent<CAnimation>()->animation.getSize().y / 2);
@@ -138,7 +138,7 @@ void GameState_Play::loadLevel(const std::string & filename)
 			e->addComponent<CState>("STATE_NAME_HERE");
 			e->addComponent<CGravity>(grav, KnockBack);
 			e->addComponent<CHealth>(HP);
-			e->addComponent<CDamage>(10);  /// health and damage values could be added as in config text , default values are used for now
+			e->addComponent<CDamage>(dmg);  /// health and damage values could be added as in config text , default values are used for now
 
 			if ( aiName == "Follow")
 			{
@@ -264,18 +264,18 @@ void GameState_Play::spawnBullet(std::shared_ptr<Entity> entity) // add check fo
 		if (m_player->getComponent<CTransform>()->facing.x == 1)
 		{
 			bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x + 15, m_player->getComponent<CTransform>()->pos.y));
-			bullet->getComponent<CTransform>()->speed = Vec2(m_playerConfig.SPEED * 2.5, 0);
+			bullet->getComponent<CTransform>()->speed = Vec2(m_playerConfig.SPEED * 3, 0);
 		}
 		else
 		{
 			bullet->addComponent<CTransform>(Vec2(m_player->getComponent<CTransform>()->pos.x - 15, m_player->getComponent<CTransform>()->pos.y));
-			bullet->getComponent<CTransform>()->speed = Vec2(-m_playerConfig.SPEED * 2.5, 0);
+			bullet->getComponent<CTransform>()->speed = Vec2(-m_playerConfig.SPEED * 3, 0);
 		}
 
 		bullet->addComponent<CAnimation>(m_game.getAssets().getAnimation("bullet"), true);
 		bullet->addComponent<CBoundingBox>(Vec2(m_game.getAssets().getAnimation("bullet").getSize().x, m_game.getAssets().getAnimation("bullet").getSize().y), false, false);
 		bullet->addComponent<CLifeSpan>(2000);
-		bullet->addComponent<CDamage>(100);
+		bullet->addComponent<CDamage>(50);
 		m_player->getComponent<CInventory>()->ammo -= 1;
 
 		m_canShoot = false;
@@ -507,84 +507,71 @@ void GameState_Play::sAI()
 			if (npc->getComponent<CTransform>()->pos.fastDist(m_player->getComponent<CTransform>()->pos) < 1000000 )
 			{
 
+				/* Use bool can see to keep track if any block breaks LOS */
+				bool can_see = true;
 
-
-
-
-
-
-			/* Use bool can see to keep track if any block breaks LOS */
-			bool can_see = true;
-
-			/* Check for tile line intersetions. */
-			for (auto & tile : m_entityManager.getEntities("Tile"))
-			{
-				/* Check tile for appropriate components */
-				if (tile->hasComponent<CBoundingBox>() && tile->getComponent<CBoundingBox>()->blockVision)
+				/* Check for tile line intersetions. */
+				for (auto & tile : m_entityManager.getEntities("Tile"))
 				{
-					if (Physics::EntityIntersect(npc->getComponent<CTransform>()->pos, m_player->getComponent<CTransform>()->pos, tile))
+					/* Check tile for appropriate components */
+					if (tile->hasComponent<CBoundingBox>() && tile->getComponent<CBoundingBox>()->blockVision)
 					{
-						can_see = false;
+						if (Physics::EntityIntersect(npc->getComponent<CTransform>()->pos, m_player->getComponent<CTransform>()->pos, tile))
+						{
+							can_see = false;
+						}
 					}
 				}
-			}
-			/* If vision, chase the player. */
-			if (can_see)
-			{
-				if (m_hurtSound.getStatus() != sf::Sound::Status::Playing)
+				/* If vision, chase the player. */
+				if (can_see)
 				{
-					std::string animationName = npc->getComponent<CAnimation>()->animation.getName();
-					m_hurtSound.setBuffer(m_game.getAssets().getSound(animationName));
-					m_hurtSound.play();
+					if (m_hurtSound.getStatus() != sf::Sound::Status::Playing)
+					{
+						std::string animationName = npc->getComponent<CAnimation>()->animation.getName();
+						m_hurtSound.setBuffer(m_game.getAssets().getSound(animationName));
+						m_hurtSound.play();
 
+					}
+
+					Vec2 Norm = (m_player->getComponent<CTransform>()->pos - npc->getComponent<CTransform>()->pos).norm();
+					Norm *= npc->getComponent<CFollowPlayer>()->speed;
+					if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+					{
+
+						npc->getComponent<CTransform>()->speed = Norm;
+					}
+					else
+					{
+						npc->getComponent<CTransform>()->speed.x = Norm.x;
+					}
+					if (Norm.x < 0)
+					{
+						npc->getComponent<CTransform>()->scale.x = 1;
+					}
+					else
+					{
+						npc->getComponent<CTransform>()->scale.x = -1;
+					}
 				}
-
-				Vec2 Norm = (m_player->getComponent<CTransform>()->pos - npc->getComponent<CTransform>()->pos).norm();
-				Norm *= npc->getComponent<CFollowPlayer>()->speed;
-				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+				/* Check if the NPCS is close that a movement would push them too far. */
+				else if (npc->getComponent<CTransform>()->pos.dist(npc->getComponent<CFollowPlayer>()->home) >= npc->getComponent<CFollowPlayer>()->speed * 1.15)
 				{
-
-					npc->getComponent<CTransform>()->speed = Norm;
+					Vec2 Norm = (npc->getComponent<CFollowPlayer>()->home - npc->getComponent<CTransform>()->pos).norm();
+					Norm *= npc->getComponent<CFollowPlayer>()->speed;
+					if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
+					{
+						npc->getComponent<CTransform>()->speed = Norm;
+					}
+					else
+					{
+						npc->getComponent<CTransform>()->speed.x = Norm.x;
+					}
 				}
+				/* Else, the NPC is now home. */
 				else
 				{
-					npc->getComponent<CTransform>()->speed.x = Norm.x;
+					npc->getComponent<CTransform>()->pos = npc->getComponent<CFollowPlayer>()->home;
 				}
-				if (Norm.x < 0)
-				{
-					npc->getComponent<CTransform>()->scale.x = 1;
-				}
-				else
-				{
-					npc->getComponent<CTransform>()->scale.x = -1;
-				}
-			}
-			/* Check if the NPCS is close that a movement would push them too far. */
-			else if (npc->getComponent<CTransform>()->pos.dist(npc->getComponent<CFollowPlayer>()->home) >= npc->getComponent<CFollowPlayer>()->speed * 1.15)
-			{
-				Vec2 Norm = (npc->getComponent<CFollowPlayer>()->home - npc->getComponent<CTransform>()->pos).norm();
-				Norm *= npc->getComponent<CFollowPlayer>()->speed;
-				if (npc->getComponent<CState>()->grounded || npc->getComponent<CGravity>()->gravity == 0)
-				{
-					npc->getComponent<CTransform>()->speed = Norm;
-				}
-				else
-				{
-					npc->getComponent<CTransform>()->speed.x = Norm.x;
-				}
-			}
-			/* Else, the NPC is now home. */
-			else
-			{
-				npc->getComponent<CTransform>()->pos = npc->getComponent<CFollowPlayer>()->home;
-			}
-
-
-
-
-
-
-
 
 			}
 
@@ -645,12 +632,12 @@ void GameState_Play::sAI()
 					auto goon  = m_entityManager.addEntity("NPC");
 					goon->addComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
 					goon->addComponent<CAnimation>(m_game.getAssets().getAnimation("acid"), true);
-					goon->addComponent<CBoundingBox>(goon->getComponent<CAnimation>()->animation.getSize()*0.75, 1, 1);
+					goon->addComponent<CBoundingBox>(goon->getComponent<CAnimation>()->animation.getSize() * 0.75, 1, 1);
 					goon->addComponent<CDamage>(10);
 					goon->addComponent<CHealth>(1);
 					goon->addComponent<CGravity>(0, 1);
 					goon->addComponent<CState>("acidshot");
-					goon->addComponent<CFollowPlayer>(Vec2(0,0), 4);
+					goon->addComponent<CFollowPlayer>(Vec2(0, 0), 4);
 					goon->addComponent<CLifeSpan>(2500);
 					npc->getComponent<CBoss>()->timer.restart();
 				}
@@ -921,10 +908,11 @@ void GameState_Play::sCollision()
 
 				npc->getComponent<CHealth>()->hp -= bullet->getComponent<CDamage>()->dmg;
 				bullet->destroy();
+				bullet->getComponent<CDamage>()->dmg = 0;
 				auto damge = m_entityManager.addEntity("effect");
 				damge->addComponent<CTransform>();
 				damge->getComponent<CTransform>()->pos = npc->getComponent<CTransform>()->pos;
-				damge->addComponent<CAnimation>(m_game.getAssets().getAnimation("death"), false);
+				damge->addComponent<CAnimation>(m_game.getAssets().getAnimation("blood"), false);
 			}
 		}
 
@@ -1379,7 +1367,7 @@ void GameState_Play::sLight()
  * @brief      { The user input system.}
  */
 
-void GameState_Play::sUserInput()\
+void GameState_Play::sUserInput()
 {
 	auto pInput = m_player->getComponent<CInput>();
 
@@ -1437,7 +1425,7 @@ void GameState_Play::sUserInput()\
 void GameState_Play::sRender()
 {
 	m_game.window().clear(sf::Color(185, 175, 175));
-	m_background.clear(sf::Color(18, 18, 18));
+	m_background.clear(sf::Color(15, 15, 15));
 	sf::View view(m_game.window().getDefaultView());
 
 	/* use center of view to position hp and item counts/selection */

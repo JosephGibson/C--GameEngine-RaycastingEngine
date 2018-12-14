@@ -92,7 +92,7 @@ void GameState_Menu::sRender()
 	m_menuText.setFillColor(sf::Color::White);
 	m_menuText.setPosition(sf::Vector2f(500, 10));
 	m_game.window().draw(m_menuText);
-	m_menuText.setCharacterSize(56);
+	m_menuText.setCharacterSize(52);
 	// draw all of the menu options
 	for (size_t i = 0; i < m_menuStrings.size(); i++)
 	{
@@ -102,6 +102,12 @@ void GameState_Menu::sRender()
 		m_game.window().draw(m_menuText);
 	}
 
+	m_menuText.setString("Left :  A        Right :  D        Jump : W        Shoot :  Space        Switch Weapons :  Q        Heal :  E");
+	m_menuText.setFillColor(sf::Color::Red);
+	m_menuText.setPosition(sf::Vector2f(25, 700));
+	m_menuText.setCharacterSize(50);
+
+	m_game.window().draw(m_menuText);
 
 	m_game.window().display();
 }
